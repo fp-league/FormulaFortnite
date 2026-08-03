@@ -1,0 +1,33 @@
+{
+  "name": "Formula Fortnite",
+  "short_name": "FF",
+  "description": "Elite Competitive Racing League",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#EF3B36",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000000' width='192' height='192'/><text x='96' y='130' font-family='Orbitron' font-size='120' fill='%23EF3B36' text-anchor='middle' font-weight='900'>FF</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%23000000' width='512' height='512'/><text x='256' y='380' font-family='Orbitron' font-size='320' fill='%23EF3B36' text-anchor='middle' font-weight='900'>FF</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "gaming"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23000000' width='540' height='720'/><rect fill='%231a1a1a' y='0' width='540' height='60'/><text x='20' y='40' font-family='Orbitron' font-size='24' fill='%23EF3B36'>FF</text><text x='270' y='300' font-family='Orbitron' font-size='48' fill='%23EF3B36' text-anchor='middle'>FORMULA FORTNITE</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}

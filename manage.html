@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FF Manage (JSON)</title>
+<style>
+  :root{--red:#EF3B36;--red2:#D32F2A;--orange:#FF6B35;--dark:#1a1a1a;--light:#333;--text:#EBEBEB;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#000;color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;padding:16px;max-width:700px;margin:0 auto;}
+  h1{color:var(--red);font-size:1.5rem;margin-bottom:4px;}
+  h2{color:#fff;font-size:1.1rem;margin:0 0 12px;}
+  .sub{opacity:.7;font-size:.85rem;margin-bottom:8px;}
+  .tabs{display:flex;gap:8px;margin:20px 0;}
+  .tab{flex:1;padding:12px;background:var(--dark);border:1px solid var(--light);color:var(--text);border-radius:4px;cursor:pointer;font-weight:700;font-size:.9rem;}
+  .tab.active{background:var(--red);color:#fff;border-color:var(--red);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  input,select{width:100%;padding:11px;margin-bottom:10px;background:var(--dark);border:1px solid var(--light);color:#fff;border-radius:4px;font-size:.95rem;}
+  input:focus,select:focus{outline:none;border-color:var(--red);}
+  .row{display:flex;gap:8px;}
+  .row input{flex:1;}
+  button.add{width:100%;padding:13px;background:var(--red);color:#fff;border:none;border-radius:4px;font-weight:700;font-size:.95rem;cursor:pointer;}
+  button.add:hover{background:var(--red2);}
+  .item{background:var(--dark);border:1px solid var(--light);border-radius:4px;padding:12px;margin-bottom:8px;}
+  .item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .item .info{flex:1;min-width:0;}
+  .item .name{font-weight:700;color:#fff;}
+  .item .meta{font-size:.82rem;color:var(--orange);}
+  .item .stats{font-size:.78rem;opacity:.7;margin-top:2px;}
+  .btns{display:flex;gap:6px;flex-shrink:0;}
+  .edit,.del,.save,.cancel{padding:7px 11px;border-radius:4px;cursor:pointer;font-size:.8rem;border:1px solid;background:transparent;}
+  .edit{border-color:var(--orange);color:var(--orange);}
+  .edit:hover{background:var(--orange);color:#fff;}
+  .del{border-color:#ff6b6b;color:#ff6b6b;}
+  .del:hover{background:#ff6b6b;color:#fff;}
+  .save{border-color:#4CAF50;color:#4CAF50;}
+  .save:hover{background:#4CAF50;color:#fff;}
+  .cancel{border-color:#888;color:#888;}
+  .editbox{margin-top:10px;padding-top:10px;border-top:1px solid var(--light);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .grid2 label{font-size:.72rem;opacity:.7;display:block;margin-bottom:3px;}
+  .grid2 input{margin-bottom:4px;}
+  .empty{opacity:.5;text-align:center;padding:20px;}
+  .card{background:var(--dark);border:1px solid var(--light);border-radius:6px;padding:16px;margin-bottom:16px;}
+  #toast{position:fixed;bottom:16px;left:16px;right:16px;max-width:668px;margin:0 auto;padding:13px;border-radius:4px;font-weight:700;text-align:center;display:none;z-index:10;}
+  #toast.ok{background:#2e7d32;color:#fff;display:block;}
+  #toast.err{background:#c62828;color:#fff;display:block;}
+  #setup{background:#2a1a00;border:1px solid var(--orange);border-radius:6px;padding:14px;margin-bottom:16px;font-size:.85rem;line-height:1.5;}
+  #setup code{background:#000;padding:2px 5px;border-radius:3px;color:var(--orange);}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+  <h1>FF Manage</h1>
+  <p class="sub">Add & edit drivers and teams. Saves to your JSON database.</p>
+
+  <div id="setup">
+    <strong>⚙️ First-time setup:</strong> open this file and fill in <code>BIN_ID</code> and <code>MASTER_KEY</code> at the top of the script (instructions in JSON-SETUP.md). This message disappears once they're set.
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="tabs">
+      <button class="tab active" data-tab="drivers">DRIVERS</button>
+      <button class="tab" data-tab="teams">TEAMS</button>
+    </div>
+
+    <!-- DRIVERS -->
+    <div class="panel active" id="driversPanel">
+      <div class="card">
+        <h2>Add Driver</h2>
+        <input id="dName" placeholder="Driver name" />
+        <input id="dTeam" placeholder="Team name" />
+        <div class="row">
+          <input id="dPoints" type="number" placeholder="Points" value="0" />
+          <input id="dWins" type="number" placeholder="Wins" value="0" />
+        </div>
+        <div class="row">
+          <input id="dPoles" type="number" placeholder="Poles" value="0" />
+          <input id="dRaces" type="number" placeholder="Races" value="0" />
+        </div>
+        <button class="add" onclick="addDriver()">ADD DRIVER</button>
+      </div>
+      <div id="driversList"><p class="empty">Loading...</p></div>
+    </div>
+
+    <!-- TEAMS -->
+    <div class="panel" id="teamsPanel">
+      <div class="card">
+        <h2>Add Team</h2>
+        <input id="tName" placeholder="Team name" />
+        <input id="tPoints" type="number" placeholder="Points" value="0" />
+        <input id="tDrivers" placeholder="Drivers (comma separated)" />
+        <button class="add" onclick="addTeam()">ADD TEAM</button>
+      </div>
+      <div id="teamsList"><p class="empty">Loading...</p></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+/* ============================================================
+   FILL THESE IN  (see JSON-SETUP.md)
+   ============================================================ */
+const BIN_ID = "YOUR_BIN_ID";
+const MASTER_KEY = "YOUR_MASTER_KEY";
+/* ============================================================ */
+
+const API = "https://api.jsonbin.io/v3/b/" + BIN_ID;
+let data = { drivers: [], teams: [], races: [] };
+let editingId = null;
+
+const configured = BIN_ID !== "YOUR_BIN_ID" && MASTER_KEY !== "YOUR_MASTER_KEY";
+
+function toast(msg, ok = true){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = ok ? 'ok' : 'err';
+  setTimeout(()=>{ el.style.display='none'; el.className=''; }, 2600);
+}
+function val(id){ return document.getElementById(id).value; }
+function num(id){ return parseInt(document.getElementById(id).value) || 0; }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.tab+'Panel').classList.add('active');
+    editingId=null;
+  };
+});
+
+// Load whole bin
+async function loadData(){
+  try{
+    const res = await fetch(API + "/latest", { headers: { "X-Master-Key": MASTER_KEY } });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    const record = json.record || {};
+    data = {
+      drivers: Array.isArray(record.drivers) ? record.drivers : [],
+      teams:   Array.isArray(record.teams)   ? record.teams   : [],
+      races:   Array.isArray(record.races)   ? record.races   : []
+    };
+    renderDrivers(); renderTeams();
+  }catch(e){
+    document.getElementById('driversList').innerHTML='<p class="empty">Error loading: '+e.message+'</p>';
+    document.getElementById('teamsList').innerHTML='';
+    toast('Load failed: '+e.message, false);
+  }
+}
+
+// Save whole bin
+async function save(){
+  const res = await fetch(API, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY },
+    body: JSON.stringify(data)
+  });
+  if(!res.ok) throw new Error("HTTP " + res.status);
+}
+
+/* ---------------- DRIVERS ---------------- */
+async function addDriver(){
+  const name = val('dName').trim();
+  if(!name){ toast('Enter a driver name', false); return; }
+  data.drivers.push({
+    id: uid(), name, team: val('dTeam').trim(),
+    points: num('dPoints'), wins: num('dWins'), poles: num('dPoles'), races: num('dRaces')
+  });
+  try{
+    await save();
+    ['dName','dTeam'].forEach(i=>document.getElementById(i).value='');
+    ['dPoints','dWins','dPoles','dRaces'].forEach(i=>document.getElementById(i).value='0');
+    toast('Driver added ✓'); renderDrivers();
+  }catch(e){ data.drivers.pop(); toast('Error: '+e.message, false); }
+}
+
+async function saveDriverEdit(id){
+  const d = data.drivers.find(x=>x.id===id); if(!d) return;
+  d.name  = document.getElementById('e_name_'+id).value.trim();
+  d.team  = document.getElementById('e_team_'+id).value.trim();
+  d.points= parseInt(document.getElementById('e_points_'+id).value)||0;
+  d.wins  = parseInt(document.getElementById('e_wins_'+id).value)||0;
+  d.poles = parseInt(document.getElementById('e_poles_'+id).value)||0;
+  d.races = parseInt(document.getElementById('e_races_'+id).value)||0;
+  try{ await save(); editingId=null; toast('Saved ✓'); renderDrivers(); }
+  catch(e){ toast('Error: '+e.message, false); }
+}
+
+async function delDriver(id){
+  if(!confirm('Delete this driver?')) return;
+  const backup = data.drivers.slice();
+  data.drivers = data.drivers.filter(x=>x.id!==id);
+  try{ await save(); toast('Deleted ✓'); renderDrivers(); }
+  catch(e){ data.drivers = backup; toast('Error: '+e.message, false); }
+}
+
+function renderDrivers(){
+  const list = document.getElementById('driversList');
+  if(!data.drivers.length){ list.innerHTML='<p class="empty">No drivers yet.</p>'; return; }
+  const sorted = data.drivers.slice().sort((a,b)=>(b.points||0)-(a.points||0));
+  list.innerHTML = sorted.map(d=>{
+    if(editingId===d.id){
+      return `<div class="item">
+        <div class="editbox" style="border:none;margin:0;padding:0">
+          <input id="e_name_${d.id}" value="${d.name||''}" placeholder="Name"/>
+          <input id="e_team_${d.id}" value="${d.team||''}" placeholder="Team"/>
+          <div class="grid2">
+            <div><label>Points</label><input id="e_points_${d.id}" type="number" value="${d.points||0}"/></div>
+            <div><label>Wins</label><input id="e_wins_${d.id}" type="number" value="${d.wins||0}"/></div>
+            <div><label>Poles</label><input id="e_poles_${d.id}" type="number" value="${d.poles||0}"/></div>
+            <div><label>Races</label><input id="e_races_${d.id}" type="number" value="${d.races||0}"/></div>
+          </div>
+          <div class="btns" style="margin-top:8px">
+            <button class="save" onclick="saveDriverEdit('${d.id}')">Save</button>
+            <button class="cancel" onclick="editingId=null;renderDrivers()">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="item">
+      <div class="top">
+        <div class="info">
+          <div class="name">${d.name||'—'}</div>
+          <div class="meta">${d.team||'No team'}</div>
+          <div class="stats">${d.points||0} pts · ${d.wins||0}W · ${d.poles||0} poles · ${d.races||0} races</div>
+        </div>
+        <div class="btns">
+          <button class="edit" onclick="editingId='${d.id}';renderDrivers()">Edit</button>
+          <button class="del" onclick="delDriver('${d.id}')">Del</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- TEAMS ---------------- */
+async function addTeam(){
+  const name = val('tName').trim();
+  if(!name){ toast('Enter a team name', false); return; }
+  const drivers = val('tDrivers').split(',').map(s=>s.trim()).filter(Boolean);
+  data.teams.push({ id: uid(), name, points: num('tPoints'), drivers });
+  try{
+    await save();
+    document.getElementById('tName').value='';
+    document.getElementById('tDrivers').value='';
+    document.getElementById('tPoints').value='0';
+    toast('Team added ✓'); renderTeams();
+  }catch(e){ data.teams.pop(); toast('Error: '+e.message, false); }
+}
+
+async function saveTeamEdit(id){
+  const t = data.teams.find(x=>x.id===id); if(!t) return;
+  t.name    = document.getElementById('e_tname_'+id).value.trim();
+  t.points  = parseInt(document.getElementById('e_tpoints_'+id).value)||0;
+  t.drivers = document.getElementById('e_tdrivers_'+id).value.split(',').map(s=>s.trim()).filter(Boolean);
+  try{ await save(); editingId=null; toast('Saved ✓'); renderTeams(); }
+  catch(e){ toast('Error: '+e.message, false); }
+}
+
+async function delTeam(id){
+  if(!confirm('Delete this team?')) return;
+  const backup = data.teams.slice();
+  data.teams = data.teams.filter(x=>x.id!==id);
+  try{ await save(); toast('Deleted ✓'); renderTeams(); }
+  catch(e){ data.teams = backup; toast('Error: '+e.message, false); }
+}
+
+function renderTeams(){
+  const list = document.getElementById('teamsList');
+  if(!data.teams.length){ list.innerHTML='<p class="empty">No teams yet.</p>'; return; }
+  const sorted = data.teams.slice().sort((a,b)=>(b.points||0)-(a.points||0));
+  list.innerHTML = sorted.map(t=>{
+    if(editingId===t.id){
+      return `<div class="item">
+        <div class="editbox" style="border:none;margin:0;padding:0">
+          <input id="e_tname_${t.id}" value="${t.name||''}" placeholder="Team name"/>
+          <input id="e_tpoints_${t.id}" type="number" value="${t.points||0}" placeholder="Points"/>
+          <input id="e_tdrivers_${t.id}" value="${(t.drivers||[]).join(', ')}" placeholder="Drivers (comma separated)"/>
+          <div class="btns" style="margin-top:8px">
+            <button class="save" onclick="saveTeamEdit('${t.id}')">Save</button>
+            <button class="cancel" onclick="editingId=null;renderTeams()">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="item">
+      <div class="top">
+        <div class="info">
+          <div class="name">${t.name||'—'}</div>
+          <div class="meta">${t.points||0} pts</div>
+          <div class="stats">${(t.drivers&&t.drivers.length)?t.drivers.join(', '):'No drivers'}</div>
+        </div>
+        <div class="btns">
+          <button class="edit" onclick="editingId='${t.id}';renderTeams()">Edit</button>
+          <button class="del" onclick="delTeam('${t.id}')">Del</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- BOOT ---------------- */
+if(configured){
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  loadData();
+}
+</script>
+</body>
+</html>
