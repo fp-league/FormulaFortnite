@@ -2,7 +2,7 @@
 // Fill these in (read-only Access Key — see README).
 // Until you do, the site shows sample data.
 const BIN_ID = "YOUR_BIN_ID";
-const ACCESS_KEY = "YOUR_ACCESS_KEY";
+const ACCESS_KEY = "$2a$10$bHb8I.kdqaJKAUK/D6Ta2.z4U8kN.7gNKNFv2NDGDXQ5lDG21LS6a";
 const JSON_CONFIGURED = BIN_ID !== "YOUR_BIN_ID" && ACCESS_KEY !== "YOUR_ACCESS_KEY";
 
 // ==================== GLOBAL STATE ====================
