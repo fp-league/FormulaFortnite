@@ -3,66 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FF Manage (JSON)</title>
+<title>FF Manage</title>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,400;0,600;0,700;0,900;1,900&display=swap" rel="stylesheet">
 <style>
-  :root{--red:#EF3B36;--red2:#D32F2A;--orange:#FF6B35;--dark:#1a1a1a;--light:#333;--text:#EBEBEB;}
+  :root{--red:#E10600;--red2:#B10500;--dark:#15151E;--surface:#1F1F27;--surface2:#2A2A35;--line:#38383F;--text:#E8E8EA;--muted:#9C9CA5;}
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:#000;color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;padding:16px;max-width:700px;margin:0 auto;}
-  h1{color:var(--red);font-size:1.5rem;margin-bottom:4px;}
-  h2{color:#fff;font-size:1.1rem;margin:0 0 12px;}
-  .sub{opacity:.7;font-size:.85rem;margin-bottom:8px;}
-  .tabs{display:flex;gap:8px;margin:20px 0;}
-  .tab{flex:1;padding:12px;background:var(--dark);border:1px solid var(--light);color:var(--text);border-radius:4px;cursor:pointer;font-weight:700;font-size:.9rem;}
+  body{background:var(--dark);color:var(--text);font-family:'Titillium Web',sans-serif;padding:16px;max-width:720px;margin:0 auto;}
+  h1{color:var(--red);font-size:1.6rem;font-style:italic;font-weight:900;text-transform:uppercase;margin-bottom:4px;}
+  h2{color:#fff;font-size:1.1rem;font-weight:900;text-transform:uppercase;margin:0 0 12px;}
+  .sub{color:var(--muted);font-size:.85rem;margin-bottom:8px;}
+  .tabs{display:flex;gap:6px;margin:20px 0;flex-wrap:wrap;}
+  .tab{flex:1;min-width:70px;padding:11px 8px;background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:6px;cursor:pointer;font-weight:700;font-size:.82rem;font-family:inherit;text-transform:uppercase;}
   .tab.active{background:var(--red);color:#fff;border-color:var(--red);}
-  .panel{display:none;}
-  .panel.active{display:block;}
-  input,select{width:100%;padding:11px;margin-bottom:10px;background:var(--dark);border:1px solid var(--light);color:#fff;border-radius:4px;font-size:.95rem;}
-  input:focus,select:focus{outline:none;border-color:var(--red);}
-  .row{display:flex;gap:8px;}
-  .row input{flex:1;}
-  button.add{width:100%;padding:13px;background:var(--red);color:#fff;border:none;border-radius:4px;font-weight:700;font-size:.95rem;cursor:pointer;}
+  .panel{display:none;} .panel.active{display:block;}
+  input,select,textarea{width:100%;padding:11px;margin-bottom:10px;background:var(--surface2);border:1px solid var(--line);color:#fff;border-radius:6px;font-size:.95rem;font-family:inherit;}
+  textarea{min-height:90px;resize:vertical;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);}
+  .row{display:flex;gap:8px;} .row input,.row select{flex:1;}
+  button.add{width:100%;padding:13px;background:var(--red);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:.95rem;cursor:pointer;font-family:inherit;text-transform:uppercase;}
   button.add:hover{background:var(--red2);}
-  .item{background:var(--dark);border:1px solid var(--light);border-radius:4px;padding:12px;margin-bottom:8px;}
+  .item{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:6px;padding:12px;margin-bottom:8px;}
   .item .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
   .item .info{flex:1;min-width:0;}
   .item .name{font-weight:700;color:#fff;}
-  .item .meta{font-size:.82rem;color:var(--orange);}
-  .item .stats{font-size:.78rem;opacity:.7;margin-top:2px;}
+  .item .meta{font-size:.82rem;color:var(--muted);}
+  .item .stats{font-size:.78rem;color:var(--muted);margin-top:2px;}
+  .avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--red);margin-right:10px;flex-shrink:0;background:var(--surface2);}
   .btns{display:flex;gap:6px;flex-shrink:0;}
-  .edit,.del,.save,.cancel{padding:7px 11px;border-radius:4px;cursor:pointer;font-size:.8rem;border:1px solid;background:transparent;}
-  .edit{border-color:var(--orange);color:var(--orange);}
-  .edit:hover{background:var(--orange);color:#fff;}
-  .del{border-color:#ff6b6b;color:#ff6b6b;}
-  .del:hover{background:#ff6b6b;color:#fff;}
-  .save{border-color:#4CAF50;color:#4CAF50;}
-  .save:hover{background:#4CAF50;color:#fff;}
+  .edit,.del,.save,.cancel{padding:7px 11px;border-radius:6px;cursor:pointer;font-size:.8rem;border:1px solid;background:transparent;font-family:inherit;font-weight:700;}
+  .edit{border-color:var(--red);color:var(--red);} .edit:hover{background:var(--red);color:#fff;}
+  .del{border-color:#ff5b5b;color:#ff5b5b;} .del:hover{background:#ff5b5b;color:#fff;}
+  .save{border-color:#00b34a;color:#00b34a;} .save:hover{background:#00b34a;color:#fff;}
   .cancel{border-color:#888;color:#888;}
-  .editbox{margin-top:10px;padding-top:10px;border-top:1px solid var(--light);}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .grid2 label{font-size:.72rem;opacity:.7;display:block;margin-bottom:3px;}
+  .grid2 label{font-size:.72rem;color:var(--muted);display:block;margin-bottom:3px;}
   .grid2 input{margin-bottom:4px;}
-  .empty{opacity:.5;text-align:center;padding:20px;}
-  .card{background:var(--dark);border:1px solid var(--light);border-radius:6px;padding:16px;margin-bottom:16px;}
-  #toast{position:fixed;bottom:16px;left:16px;right:16px;max-width:668px;margin:0 auto;padding:13px;border-radius:4px;font-weight:700;text-align:center;display:none;z-index:10;}
-  #toast.ok{background:#2e7d32;color:#fff;display:block;}
-  #toast.err{background:#c62828;color:#fff;display:block;}
-  #setup{background:#2a1a00;border:1px solid var(--orange);border-radius:6px;padding:14px;margin-bottom:16px;font-size:.85rem;line-height:1.5;}
-  #setup code{background:#000;padding:2px 5px;border-radius:3px;color:var(--orange);}
+  .empty{color:var(--muted);text-align:center;padding:20px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px;}
+  #toast{position:fixed;bottom:16px;left:16px;right:16px;max-width:688px;margin:0 auto;padding:13px;border-radius:6px;font-weight:700;text-align:center;display:none;z-index:10;}
+  #toast.ok{background:#00913c;color:#fff;display:block;} #toast.err{background:#c31200;color:#fff;display:block;}
+  #setup{background:#2a1400;border:1px solid var(--red);border-radius:8px;padding:14px;margin-bottom:16px;font-size:.85rem;line-height:1.5;}
+  #setup code{background:#000;padding:2px 5px;border-radius:3px;color:var(--red);}
   .hidden{display:none;}
+  #lock{position:fixed;inset:0;background:var(--dark);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:50;padding:20px;}
+  #lock .box{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--red);border-radius:10px;padding:32px 26px;width:100%;max-width:360px;text-align:center;}
+  #lock h1{margin-bottom:6px;}
+  #lock p{color:var(--muted);font-size:.9rem;margin-bottom:20px;}
+  #lock input{text-align:center;letter-spacing:.3em;font-size:1.2rem;font-weight:700;}
+  #lockErr{color:#ff5b5b;font-size:.85rem;margin-top:10px;min-height:1em;}
 </style>
 </head>
 <body>
+
+  <div id="lock">
+    <div class="box">
+      <h1>FF Manage</h1>
+      <p>Enter passcode to continue</p>
+      <input id="pass" type="password" placeholder="****" autocomplete="off" />
+      <button class="add" onclick="tryUnlock()">UNLOCK</button>
+      <div id="lockErr"></div>
+    </div>
+  </div>
+
   <h1>FF Manage</h1>
-  <p class="sub">Add & edit drivers and teams. Saves to your JSON database.</p>
+  <p class="sub">Manage everything: drivers, teams, races, news.</p>
 
   <div id="setup">
-    <strong>⚙️ First-time setup:</strong> open this file and fill in <code>BIN_ID</code> and <code>MASTER_KEY</code> at the top of the script (instructions in JSON-SETUP.md). This message disappears once they're set.
+    <strong>Setup:</strong> fill in <code>BIN_ID</code> and <code>MASTER_KEY</code> near the top of the script.
   </div>
 
   <div id="app" class="hidden">
     <div class="tabs">
-      <button class="tab active" data-tab="drivers">DRIVERS</button>
-      <button class="tab" data-tab="teams">TEAMS</button>
+      <button class="tab active" data-tab="drivers">Drivers</button>
+      <button class="tab" data-tab="teams">Teams</button>
+      <button class="tab" data-tab="races">Races</button>
+      <button class="tab" data-tab="news">News</button>
+      <button class="tab" data-tab="seasons">Seasons</button>
     </div>
 
     <!-- DRIVERS -->
@@ -71,14 +87,9 @@
         <h2>Add Driver</h2>
         <input id="dName" placeholder="Driver name" />
         <input id="dTeam" placeholder="Team name" />
-        <div class="row">
-          <input id="dPoints" type="number" placeholder="Points" value="0" />
-          <input id="dWins" type="number" placeholder="Wins" value="0" />
-        </div>
-        <div class="row">
-          <input id="dPoles" type="number" placeholder="Poles" value="0" />
-          <input id="dRaces" type="number" placeholder="Races" value="0" />
-        </div>
+        <input id="dPhoto" placeholder="Photo URL (optional)" />
+        <div class="row"><input id="dPoints" type="number" placeholder="Points" value="0" /><input id="dWins" type="number" placeholder="Wins" value="0" /></div>
+        <div class="row"><input id="dPoles" type="number" placeholder="Poles" value="0" /><input id="dRaces" type="number" placeholder="Races" value="0" /></div>
         <button class="add" onclick="addDriver()">ADD DRIVER</button>
       </div>
       <div id="driversList"><p class="empty">Loading...</p></div>
@@ -95,220 +106,328 @@
       </div>
       <div id="teamsList"><p class="empty">Loading...</p></div>
     </div>
+
+    <!-- RACES -->
+    <div class="panel" id="racesPanel">
+      <div class="card">
+        <h2>Add Race</h2>
+        <input id="rName" placeholder="Race name" />
+        <input id="rTrack" placeholder="Track name" />
+        <input id="rDate" type="date" />
+        <div class="row">
+          <select id="rFormat"><option value="Sprint">Sprint</option><option value="Classic">Classic</option><option value="Championship">Championship</option><option value="Endurance">Endurance</option></select>
+          <input id="rLaps" type="number" placeholder="Laps" value="50" />
+        </div>
+        <select id="rStatus"><option value="upcoming">Upcoming</option><option value="completed">Completed</option></select>
+        <button class="add" onclick="addRace()">ADD RACE</button>
+      </div>
+      <div id="racesList"><p class="empty">Loading...</p></div>
+    </div>
+
+    <!-- NEWS -->
+    <div class="panel" id="newsPanel">
+      <div class="card">
+        <h2>Add News</h2>
+        <input id="nTitle" placeholder="Headline" />
+        <input id="nDate" type="date" />
+        <textarea id="nBody" placeholder="Story text..."></textarea>
+        <button class="add" onclick="addNews()">ADD NEWS</button>
+      </div>
+      <div id="newsList"><p class="empty">Loading...</p></div>
+    </div>
+
+    <!-- SEASONS -->
+    <div class="panel" id="seasonsPanel">
+      <div class="card">
+        <h2>Current Season</h2>
+        <p class="sub" style="margin-bottom:10px;">This label shows on the site's season dropdown.</p>
+        <input id="seasonName" placeholder="e.g. 2026" />
+        <button class="add" onclick="saveSeasonName()">SAVE SEASON NAME</button>
+      </div>
+      <div class="card">
+        <h2>Archive Season</h2>
+        <p class="sub" style="margin-bottom:10px;">Saves a frozen snapshot of current drivers, teams & races under a season name. Nothing is deleted.</p>
+        <input id="archiveName" placeholder="Season to save as, e.g. 2025" />
+        <button class="add" onclick="archiveSeason()">ARCHIVE CURRENT SEASON</button>
+      </div>
+      <div class="card">
+        <h2>Start Fresh (optional)</h2>
+        <p class="sub" style="margin-bottom:10px;">Archive first! These reset the live season.</p>
+        <button class="add" style="background:#8a5a00;margin-bottom:10px;" onclick="resetPoints()">RESET ALL DRIVER STATS TO 0</button>
+        <button class="add" style="background:#8a0000;" onclick="clearRaces()">CLEAR ALL RACES</button>
+      </div>
+      <h2 style="margin-top:20px;">Archived Seasons</h2>
+      <div id="seasonsList"><p class="empty">Loading...</p></div>
+    </div>
   </div>
 
   <div id="toast"></div>
 
 <script>
 /* ============================================================
-   FILL THESE IN  (see JSON-SETUP.md)
+   FILL THESE IN
    ============================================================ */
 const BIN_ID = "6a710bbdf5f4af5e29e6f916";
 const MASTER_KEY = "$2a$10$bHb8I.kdqaJKAUK/D6Ta2.z4U8kN.7gNKNFv2NDGDXQ5lDG21LS6a";
+const PASSCODE = "FF28";
 /* ============================================================ */
 
 const API = "https://api.jsonbin.io/v3/b/" + BIN_ID;
-let data = { drivers: [], teams: [], races: [] };
+let data = { seasonName: '2026', drivers: [], teams: [], races: [], news: [], archive: {} };
 let editingId = null;
-
 const configured = BIN_ID !== "YOUR_BIN_ID" && MASTER_KEY !== "YOUR_MASTER_KEY";
 
-function toast(msg, ok = true){
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.className = ok ? 'ok' : 'err';
-  setTimeout(()=>{ el.style.display='none'; el.className=''; }, 2600);
+/* ---------- LOCK ---------- */
+function tryUnlock(){
+  const v = document.getElementById('pass').value.trim();
+  if(v === PASSCODE){ try{ sessionStorage.setItem('ff_unlocked','1'); }catch(e){} unlock(); }
+  else { document.getElementById('lockErr').textContent='Wrong passcode'; document.getElementById('pass').value=''; }
 }
+function unlock(){
+  document.getElementById('lock').style.display='none';
+  if(configured){ document.getElementById('setup').classList.add('hidden'); document.getElementById('app').classList.remove('hidden'); loadData(); }
+}
+document.getElementById('pass').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+try{ if(sessionStorage.getItem('ff_unlocked')==='1') unlock(); }catch(e){}
+
+/* ---------- HELPERS ---------- */
+function toast(msg,ok=true){ const el=document.getElementById('toast'); el.textContent=msg; el.className=ok?'ok':'err'; setTimeout(()=>{el.style.display='none';el.className='';},2600); }
 function val(id){ return document.getElementById(id).value; }
-function num(id){ return parseInt(document.getElementById(id).value) || 0; }
-function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function num(id){ return parseInt(document.getElementById(id).value)||0; }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s){ return (s||'').replace(/"/g,'&quot;'); }
 
-// Tabs
-document.querySelectorAll('.tab').forEach(t=>{
-  t.onclick=()=>{
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById(t.dataset.tab+'Panel').classList.add('active');
-    editingId=null;
-  };
-});
+document.querySelectorAll('.tab').forEach(t=>{ t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.tab+'Panel').classList.add('active'); editingId=null; }; });
 
-// Load whole bin
 async function loadData(){
   try{
-    const res = await fetch(API + "/latest", { headers: { "X-Master-Key": MASTER_KEY } });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const json = await res.json();
-    const record = json.record || {};
-    data = {
-      drivers: Array.isArray(record.drivers) ? record.drivers : [],
-      teams:   Array.isArray(record.teams)   ? record.teams   : [],
-      races:   Array.isArray(record.races)   ? record.races   : []
-    };
-    renderDrivers(); renderTeams();
-  }catch(e){
-    document.getElementById('driversList').innerHTML='<p class="empty">Error loading: '+e.message+'</p>';
-    document.getElementById('teamsList').innerHTML='';
-    toast('Load failed: '+e.message, false);
-  }
+    const res=await fetch(API+"/latest",{headers:{"X-Master-Key":MASTER_KEY}});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const json=await res.json(); const r=json.record||{};
+    data={ seasonName:r.seasonName||'2026', drivers:Array.isArray(r.drivers)?r.drivers:[], teams:Array.isArray(r.teams)?r.teams:[], races:Array.isArray(r.races)?r.races:[], news:Array.isArray(r.news)?r.news:[], archive:(r.archive&&typeof r.archive==='object')?r.archive:{} };
+    renderDrivers(); renderTeams(); renderRaces(); renderNews(); renderSeasons();
+  }catch(e){ document.getElementById('driversList').innerHTML='<p class="empty">Error: '+e.message+'</p>'; toast('Load failed: '+e.message,false); }
 }
-
-// Save whole bin
 async function save(){
-  const res = await fetch(API, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY },
-    body: JSON.stringify(data)
-  });
-  if(!res.ok) throw new Error("HTTP " + res.status);
+  const res=await fetch(API,{method:"PUT",headers:{"Content-Type":"application/json","X-Master-Key":MASTER_KEY},body:JSON.stringify(data)});
+  if(!res.ok) throw new Error("HTTP "+res.status);
 }
 
-/* ---------------- DRIVERS ---------------- */
+/* ---------- DRIVERS ---------- */
 async function addDriver(){
-  const name = val('dName').trim();
-  if(!name){ toast('Enter a driver name', false); return; }
-  data.drivers.push({
-    id: uid(), name, team: val('dTeam').trim(),
-    points: num('dPoints'), wins: num('dWins'), poles: num('dPoles'), races: num('dRaces')
-  });
-  try{
-    await save();
-    ['dName','dTeam'].forEach(i=>document.getElementById(i).value='');
-    ['dPoints','dWins','dPoles','dRaces'].forEach(i=>document.getElementById(i).value='0');
-    toast('Driver added ✓'); renderDrivers();
-  }catch(e){ data.drivers.pop(); toast('Error: '+e.message, false); }
+  const name=val('dName').trim(); if(!name){toast('Enter a driver name',false);return;}
+  data.drivers.push({id:uid(),name,team:val('dTeam').trim(),photo:val('dPhoto').trim(),points:num('dPoints'),wins:num('dWins'),poles:num('dPoles'),races:num('dRaces')});
+  try{ await save(); ['dName','dTeam','dPhoto'].forEach(i=>document.getElementById(i).value=''); ['dPoints','dWins','dPoles','dRaces'].forEach(i=>document.getElementById(i).value='0'); toast('Driver added'); renderDrivers(); }
+  catch(e){ data.drivers.pop(); toast('Error: '+e.message,false); }
 }
-
 async function saveDriverEdit(id){
-  const d = data.drivers.find(x=>x.id===id); if(!d) return;
-  d.name  = document.getElementById('e_name_'+id).value.trim();
-  d.team  = document.getElementById('e_team_'+id).value.trim();
-  d.points= parseInt(document.getElementById('e_points_'+id).value)||0;
-  d.wins  = parseInt(document.getElementById('e_wins_'+id).value)||0;
-  d.poles = parseInt(document.getElementById('e_poles_'+id).value)||0;
-  d.races = parseInt(document.getElementById('e_races_'+id).value)||0;
-  try{ await save(); editingId=null; toast('Saved ✓'); renderDrivers(); }
-  catch(e){ toast('Error: '+e.message, false); }
+  const d=data.drivers.find(x=>x.id===id); if(!d)return;
+  d.name=document.getElementById('e_name_'+id).value.trim(); d.team=document.getElementById('e_team_'+id).value.trim(); d.photo=document.getElementById('e_photo_'+id).value.trim();
+  d.points=parseInt(document.getElementById('e_points_'+id).value)||0; d.wins=parseInt(document.getElementById('e_wins_'+id).value)||0;
+  d.poles=parseInt(document.getElementById('e_poles_'+id).value)||0; d.races=parseInt(document.getElementById('e_races_'+id).value)||0;
+  try{ await save(); editingId=null; toast('Saved'); renderDrivers(); }catch(e){ toast('Error: '+e.message,false); }
 }
-
 async function delDriver(id){
-  if(!confirm('Delete this driver?')) return;
-  const backup = data.drivers.slice();
-  data.drivers = data.drivers.filter(x=>x.id!==id);
-  try{ await save(); toast('Deleted ✓'); renderDrivers(); }
-  catch(e){ data.drivers = backup; toast('Error: '+e.message, false); }
+  if(!confirm('Delete this driver?'))return;
+  const b=data.drivers.slice(); data.drivers=data.drivers.filter(x=>x.id!==id);
+  try{ await save(); toast('Deleted'); renderDrivers(); }catch(e){ data.drivers=b; toast('Error: '+e.message,false); }
 }
-
 function renderDrivers(){
-  const list = document.getElementById('driversList');
+  const list=document.getElementById('driversList');
   if(!data.drivers.length){ list.innerHTML='<p class="empty">No drivers yet.</p>'; return; }
-  const sorted = data.drivers.slice().sort((a,b)=>(b.points||0)-(a.points||0));
-  list.innerHTML = sorted.map(d=>{
+  const sorted=data.drivers.slice().sort((a,b)=>(b.points||0)-(a.points||0));
+  list.innerHTML=sorted.map(d=>{
     if(editingId===d.id){
-      return `<div class="item">
-        <div class="editbox" style="border:none;margin:0;padding:0">
-          <input id="e_name_${d.id}" value="${d.name||''}" placeholder="Name"/>
-          <input id="e_team_${d.id}" value="${d.team||''}" placeholder="Team"/>
-          <div class="grid2">
-            <div><label>Points</label><input id="e_points_${d.id}" type="number" value="${d.points||0}"/></div>
-            <div><label>Wins</label><input id="e_wins_${d.id}" type="number" value="${d.wins||0}"/></div>
-            <div><label>Poles</label><input id="e_poles_${d.id}" type="number" value="${d.poles||0}"/></div>
-            <div><label>Races</label><input id="e_races_${d.id}" type="number" value="${d.races||0}"/></div>
-          </div>
-          <div class="btns" style="margin-top:8px">
-            <button class="save" onclick="saveDriverEdit('${d.id}')">Save</button>
-            <button class="cancel" onclick="editingId=null;renderDrivers()">Cancel</button>
-          </div>
-        </div>
-      </div>`;
+      return '<div class="item"><div style="border:none;margin:0;padding:0">'
+        +'<input id="e_name_'+d.id+'" value="'+esc(d.name)+'" placeholder="Name"/>'
+        +'<input id="e_team_'+d.id+'" value="'+esc(d.team)+'" placeholder="Team"/>'
+        +'<input id="e_photo_'+d.id+'" value="'+esc(d.photo)+'" placeholder="Photo URL"/>'
+        +'<div class="grid2"><div><label>Points</label><input id="e_points_'+d.id+'" type="number" value="'+(d.points||0)+'"/></div>'
+        +'<div><label>Wins</label><input id="e_wins_'+d.id+'" type="number" value="'+(d.wins||0)+'"/></div>'
+        +'<div><label>Poles</label><input id="e_poles_'+d.id+'" type="number" value="'+(d.poles||0)+'"/></div>'
+        +'<div><label>Races</label><input id="e_races_'+d.id+'" type="number" value="'+(d.races||0)+'"/></div></div>'
+        +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveDriverEdit(\''+d.id+'\')">Save</button>'
+        +'<button class="cancel" onclick="editingId=null;renderDrivers()">Cancel</button></div></div></div>';
     }
-    return `<div class="item">
-      <div class="top">
-        <div class="info">
-          <div class="name">${d.name||'—'}</div>
-          <div class="meta">${d.team||'No team'}</div>
-          <div class="stats">${d.points||0} pts · ${d.wins||0}W · ${d.poles||0} poles · ${d.races||0} races</div>
-        </div>
-        <div class="btns">
-          <button class="edit" onclick="editingId='${d.id}';renderDrivers()">Edit</button>
-          <button class="del" onclick="delDriver('${d.id}')">Del</button>
-        </div>
-      </div>
-    </div>`;
+    const av=d.photo?'<img class="avatar" src="'+esc(d.photo)+'" onerror="this.style.display=\'none\'"/>':'';
+    return '<div class="item"><div class="top">'+av+'<div class="info">'
+      +'<div class="name">'+(d.name||'-')+'</div><div class="meta">'+(d.team||'No team')+'</div>'
+      +'<div class="stats">'+(d.points||0)+' pts &middot; '+(d.wins||0)+'W &middot; '+(d.poles||0)+' poles &middot; '+(d.races||0)+' races</div></div>'
+      +'<div class="btns"><button class="edit" onclick="editingId=\''+d.id+'\';renderDrivers()">Edit</button>'
+      +'<button class="del" onclick="delDriver(\''+d.id+'\')">Del</button></div></div></div>';
   }).join('');
 }
 
-/* ---------------- TEAMS ---------------- */
+/* ---------- TEAMS ---------- */
 async function addTeam(){
-  const name = val('tName').trim();
-  if(!name){ toast('Enter a team name', false); return; }
-  const drivers = val('tDrivers').split(',').map(s=>s.trim()).filter(Boolean);
-  data.teams.push({ id: uid(), name, points: num('tPoints'), drivers });
-  try{
-    await save();
-    document.getElementById('tName').value='';
-    document.getElementById('tDrivers').value='';
-    document.getElementById('tPoints').value='0';
-    toast('Team added ✓'); renderTeams();
-  }catch(e){ data.teams.pop(); toast('Error: '+e.message, false); }
+  const name=val('tName').trim(); if(!name){toast('Enter a team name',false);return;}
+  data.teams.push({id:uid(),name,points:num('tPoints'),drivers:val('tDrivers').split(',').map(s=>s.trim()).filter(Boolean)});
+  try{ await save(); document.getElementById('tName').value=''; document.getElementById('tDrivers').value=''; document.getElementById('tPoints').value='0'; toast('Team added'); renderTeams(); }
+  catch(e){ data.teams.pop(); toast('Error: '+e.message,false); }
 }
-
 async function saveTeamEdit(id){
-  const t = data.teams.find(x=>x.id===id); if(!t) return;
-  t.name    = document.getElementById('e_tname_'+id).value.trim();
-  t.points  = parseInt(document.getElementById('e_tpoints_'+id).value)||0;
-  t.drivers = document.getElementById('e_tdrivers_'+id).value.split(',').map(s=>s.trim()).filter(Boolean);
-  try{ await save(); editingId=null; toast('Saved ✓'); renderTeams(); }
-  catch(e){ toast('Error: '+e.message, false); }
+  const t=data.teams.find(x=>x.id===id); if(!t)return;
+  t.name=document.getElementById('e_tname_'+id).value.trim(); t.points=parseInt(document.getElementById('e_tpoints_'+id).value)||0;
+  t.drivers=document.getElementById('e_tdrivers_'+id).value.split(',').map(s=>s.trim()).filter(Boolean);
+  try{ await save(); editingId=null; toast('Saved'); renderTeams(); }catch(e){ toast('Error: '+e.message,false); }
 }
-
 async function delTeam(id){
-  if(!confirm('Delete this team?')) return;
-  const backup = data.teams.slice();
-  data.teams = data.teams.filter(x=>x.id!==id);
-  try{ await save(); toast('Deleted ✓'); renderTeams(); }
-  catch(e){ data.teams = backup; toast('Error: '+e.message, false); }
+  if(!confirm('Delete this team?'))return;
+  const b=data.teams.slice(); data.teams=data.teams.filter(x=>x.id!==id);
+  try{ await save(); toast('Deleted'); renderTeams(); }catch(e){ data.teams=b; toast('Error: '+e.message,false); }
 }
-
 function renderTeams(){
-  const list = document.getElementById('teamsList');
+  const list=document.getElementById('teamsList');
   if(!data.teams.length){ list.innerHTML='<p class="empty">No teams yet.</p>'; return; }
-  const sorted = data.teams.slice().sort((a,b)=>(b.points||0)-(a.points||0));
-  list.innerHTML = sorted.map(t=>{
+  const sorted=data.teams.slice().sort((a,b)=>(b.points||0)-(a.points||0));
+  list.innerHTML=sorted.map(t=>{
     if(editingId===t.id){
-      return `<div class="item">
-        <div class="editbox" style="border:none;margin:0;padding:0">
-          <input id="e_tname_${t.id}" value="${t.name||''}" placeholder="Team name"/>
-          <input id="e_tpoints_${t.id}" type="number" value="${t.points||0}" placeholder="Points"/>
-          <input id="e_tdrivers_${t.id}" value="${(t.drivers||[]).join(', ')}" placeholder="Drivers (comma separated)"/>
-          <div class="btns" style="margin-top:8px">
-            <button class="save" onclick="saveTeamEdit('${t.id}')">Save</button>
-            <button class="cancel" onclick="editingId=null;renderTeams()">Cancel</button>
-          </div>
-        </div>
-      </div>`;
+      return '<div class="item"><div style="border:none;margin:0;padding:0">'
+        +'<input id="e_tname_'+t.id+'" value="'+esc(t.name)+'" placeholder="Team name"/>'
+        +'<input id="e_tpoints_'+t.id+'" type="number" value="'+(t.points||0)+'" placeholder="Points"/>'
+        +'<input id="e_tdrivers_'+t.id+'" value="'+esc((t.drivers||[]).join(', '))+'" placeholder="Drivers (comma separated)"/>'
+        +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveTeamEdit(\''+t.id+'\')">Save</button>'
+        +'<button class="cancel" onclick="editingId=null;renderTeams()">Cancel</button></div></div></div>';
     }
-    return `<div class="item">
-      <div class="top">
-        <div class="info">
-          <div class="name">${t.name||'—'}</div>
-          <div class="meta">${t.points||0} pts</div>
-          <div class="stats">${(t.drivers&&t.drivers.length)?t.drivers.join(', '):'No drivers'}</div>
-        </div>
-        <div class="btns">
-          <button class="edit" onclick="editingId='${t.id}';renderTeams()">Edit</button>
-          <button class="del" onclick="delTeam('${t.id}')">Del</button>
-        </div>
-      </div>
-    </div>`;
+    return '<div class="item"><div class="top"><div class="info">'
+      +'<div class="name">'+(t.name||'-')+'</div><div class="meta">'+(t.points||0)+' pts</div>'
+      +'<div class="stats">'+((t.drivers&&t.drivers.length)?t.drivers.join(', '):'No drivers')+'</div></div>'
+      +'<div class="btns"><button class="edit" onclick="editingId=\''+t.id+'\';renderTeams()">Edit</button>'
+      +'<button class="del" onclick="delTeam(\''+t.id+'\')">Del</button></div></div></div>';
   }).join('');
 }
 
-/* ---------------- BOOT ---------------- */
-if(configured){
-  document.getElementById('setup').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  loadData();
+/* ---------- RACES ---------- */
+function resultsToText(results){ return (results||[]).map(r=>r.driver+', '+r.pos+', '+r.pts).join('\n'); }
+function textToResults(text){
+  return (text||'').split('\n').map(line=>{
+    const p=line.split(','); if(!p[0]||!p[0].trim())return null;
+    return { driver:p[0].trim(), pos:parseInt(p[1])||0, pts:parseInt(p[2])||0 };
+  }).filter(Boolean);
+}
+async function addRace(){
+  const name=val('rName').trim(); if(!name){toast('Enter a race name',false);return;}
+  data.races.push({id:uid(),name,track:val('rTrack').trim(),date:val('rDate'),format:val('rFormat'),laps:num('rLaps'),status:val('rStatus'),results:[]});
+  try{ await save(); ['rName','rTrack','rDate'].forEach(i=>document.getElementById(i).value=''); document.getElementById('rLaps').value='50'; toast('Race added'); renderRaces(); }
+  catch(e){ data.races.pop(); toast('Error: '+e.message,false); }
+}
+async function saveRaceEdit(id){
+  const r=data.races.find(x=>x.id===id); if(!r)return;
+  r.name=document.getElementById('e_rname_'+id).value.trim(); r.track=document.getElementById('e_rtrack_'+id).value.trim();
+  r.date=document.getElementById('e_rdate_'+id).value; r.format=document.getElementById('e_rformat_'+id).value;
+  r.laps=parseInt(document.getElementById('e_rlaps_'+id).value)||0; r.status=document.getElementById('e_rstatus_'+id).value;
+  r.results=textToResults(document.getElementById('e_rresults_'+id).value);
+  try{ await save(); editingId=null; toast('Saved'); renderRaces(); }catch(e){ toast('Error: '+e.message,false); }
+}
+
+/* ---------- SEASONS ---------- */
+function saveSeasonName(){ (async()=>{ data.seasonName=val('seasonName').trim()||data.seasonName; try{ await save(); toast('Season name saved'); }catch(e){ toast('Error: '+e.message,false); } })(); }
+async function archiveSeason(){
+  const nm=val('archiveName').trim(); if(!nm){toast('Enter a season name to save as',false);return;}
+  if(!data.archive) data.archive={};
+  data.archive[nm]=JSON.parse(JSON.stringify({ seasonName:nm, drivers:data.drivers, teams:data.teams, races:data.races }));
+  try{ await save(); document.getElementById('archiveName').value=''; toast('Season "'+nm+'" archived'); renderSeasons(); }
+  catch(e){ delete data.archive[nm]; toast('Error: '+e.message,false); }
+}
+async function resetPoints(){
+  if(!confirm('Reset every driver\u2019s points, wins, poles and races to 0? Archive first!'))return;
+  data.drivers.forEach(d=>{ d.points=0; d.wins=0; d.poles=0; d.races=0; });
+  data.teams.forEach(t=>{ t.points=0; });
+  try{ await save(); toast('Stats reset'); renderDrivers(); renderTeams(); }catch(e){ toast('Error: '+e.message,false); }
+}
+async function clearRaces(){
+  if(!confirm('Delete ALL races in the live season? Archive first!'))return;
+  const b=data.races.slice(); data.races=[];
+  try{ await save(); toast('Races cleared'); renderRaces(); }catch(e){ data.races=b; toast('Error: '+e.message,false); }
+}
+async function delArchive(nm){
+  if(!confirm('Delete archived season "'+nm+'"?'))return;
+  const b=data.archive[nm]; delete data.archive[nm];
+  try{ await save(); toast('Deleted'); renderSeasons(); }catch(e){ data.archive[nm]=b; toast('Error: '+e.message,false); }
+}
+function renderSeasons(){
+  document.getElementById('seasonName').value=data.seasonName||'';
+  const list=document.getElementById('seasonsList');
+  const keys=Object.keys(data.archive||{});
+  if(!keys.length){ list.innerHTML='<p class="empty">No archived seasons yet.</p>'; return; }
+  list.innerHTML=keys.sort().reverse().map(nm=>{
+    const s=data.archive[nm];
+    return '<div class="item"><div class="top"><div class="info">'
+      +'<div class="name">'+nm+'</div>'
+      +'<div class="stats">'+((s.drivers||[]).length)+' drivers &middot; '+((s.teams||[]).length)+' teams &middot; '+((s.races||[]).length)+' races</div></div>'
+      +'<div class="btns"><button class="del" onclick="delArchive(\''+nm+'\')">Del</button></div></div></div>';
+  }).join('');
+}
+async function delRace(id){
+  if(!confirm('Delete this race?'))return;
+  const b=data.races.slice(); data.races=data.races.filter(x=>x.id!==id);
+  try{ await save(); toast('Deleted'); renderRaces(); }catch(e){ data.races=b; toast('Error: '+e.message,false); }
+}
+function fmtDate(d){ if(!d)return 'No date'; try{ return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } }
+function renderRaces(){
+  const list=document.getElementById('racesList');
+  if(!data.races.length){ list.innerHTML='<p class="empty">No races yet.</p>'; return; }
+  const sorted=data.races.slice().sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+  const fmts=['Sprint','Classic','Championship','Endurance'];
+  list.innerHTML=sorted.map(r=>{
+    if(editingId===r.id){
+      return '<div class="item"><div style="border:none;margin:0;padding:0">'
+        +'<input id="e_rname_'+r.id+'" value="'+esc(r.name)+'" placeholder="Race name"/>'
+        +'<input id="e_rtrack_'+r.id+'" value="'+esc(r.track)+'" placeholder="Track"/>'
+        +'<input id="e_rdate_'+r.id+'" type="date" value="'+(r.date||'')+'"/>'
+        +'<div class="row"><select id="e_rformat_'+r.id+'">'+fmts.map(f=>'<option value="'+f+'"'+(r.format===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'
+        +'<input id="e_rlaps_'+r.id+'" type="number" value="'+(r.laps||0)+'"/></div>'
+        +'<select id="e_rstatus_'+r.id+'"><option value="upcoming"'+(r.status==='upcoming'?' selected':'')+'>Upcoming</option><option value="completed"'+(r.status==='completed'?' selected':'')+'>Completed</option></select>'
+        +'<label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:3px;">Results — one per line: Driver, position, points</label>'
+        +'<textarea id="e_rresults_'+r.id+'" placeholder="Alex Racer, 1, 25&#10;Jordan Swift, 2, 18">'+resultsToText(r.results)+'</textarea>'
+        +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveRaceEdit(\''+r.id+'\')">Save</button>'
+        +'<button class="cancel" onclick="editingId=null;renderRaces()">Cancel</button></div></div></div>';
+    }
+    return '<div class="item"><div class="top"><div class="info">'
+      +'<div class="name">'+(r.name||'-')+'</div><div class="meta">'+(r.track||'')+' &middot; '+fmtDate(r.date)+'</div>'
+      +'<div class="stats">'+(r.format||'')+' &middot; '+(r.laps||0)+' laps &middot; '+((r.status||'').toUpperCase())+'</div></div>'
+      +'<div class="btns"><button class="edit" onclick="editingId=\''+r.id+'\';renderRaces()">Edit</button>'
+      +'<button class="del" onclick="delRace(\''+r.id+'\')">Del</button></div></div></div>';
+  }).join('');
+}
+
+/* ---------- NEWS ---------- */
+async function addNews(){
+  const title=val('nTitle').trim(); if(!title){toast('Enter a headline',false);return;}
+  data.news.push({id:uid(),title,body:val('nBody').trim(),date:val('nDate')||new Date().toISOString().slice(0,10)});
+  try{ await save(); ['nTitle','nBody','nDate'].forEach(i=>document.getElementById(i).value=''); toast('News added'); renderNews(); }
+  catch(e){ data.news.pop(); toast('Error: '+e.message,false); }
+}
+async function saveNewsEdit(id){
+  const n=data.news.find(x=>x.id===id); if(!n)return;
+  n.title=document.getElementById('e_ntitle_'+id).value.trim(); n.date=document.getElementById('e_ndate_'+id).value;
+  n.body=document.getElementById('e_nbody_'+id).value.trim();
+  try{ await save(); editingId=null; toast('Saved'); renderNews(); }catch(e){ toast('Error: '+e.message,false); }
+}
+async function delNews(id){
+  if(!confirm('Delete this news item?'))return;
+  const b=data.news.slice(); data.news=data.news.filter(x=>x.id!==id);
+  try{ await save(); toast('Deleted'); renderNews(); }catch(e){ data.news=b; toast('Error: '+e.message,false); }
+}
+function renderNews(){
+  const list=document.getElementById('newsList');
+  if(!data.news.length){ list.innerHTML='<p class="empty">No news yet.</p>'; return; }
+  const sorted=data.news.slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+  list.innerHTML=sorted.map(n=>{
+    if(editingId===n.id){
+      return '<div class="item"><div style="border:none;margin:0;padding:0">'
+        +'<input id="e_ntitle_'+n.id+'" value="'+esc(n.title)+'" placeholder="Headline"/>'
+        +'<input id="e_ndate_'+n.id+'" type="date" value="'+(n.date||'')+'"/>'
+        +'<textarea id="e_nbody_'+n.id+'" placeholder="Story text">'+(n.body||'')+'</textarea>'
+        +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveNewsEdit(\''+n.id+'\')">Save</button>'
+        +'<button class="cancel" onclick="editingId=null;renderNews()">Cancel</button></div></div></div>';
+    }
+    return '<div class="item"><div class="top"><div class="info">'
+      +'<div class="name">'+(n.title||'-')+'</div><div class="meta">'+fmtDate(n.date)+'</div>'
+      +'<div class="stats">'+((n.body||'').slice(0,90))+((n.body||'').length>90?'...':'')+'</div></div>'
+      +'<div class="btns"><button class="edit" onclick="editingId=\''+n.id+'\';renderNews()">Edit</button>'
+      +'<button class="del" onclick="delNews(\''+n.id+'\')">Del</button></div></div></div>';
+  }).join('');
 }
 </script>
 </body>
