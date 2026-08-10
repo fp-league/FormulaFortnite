@@ -45,6 +45,12 @@
   #setup{background:#2a1400;border:1px solid var(--red);border-radius:8px;padding:14px;margin-bottom:16px;font-size:.85rem;line-height:1.5;}
   #setup code{background:#000;padding:2px 5px;border-radius:3px;color:var(--red);}
   .hidden{display:none;}
+  .hub{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px;}
+  .hub-card{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--red);border-radius:10px;padding:22px 16px;color:#fff;font-family:inherit;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .2s;}
+  .hub-card:hover{border-color:var(--red);transform:translateY(-2px);}
+  .hub-ico{font-size:1.8rem;}
+  .backbtn{background:transparent;border:1px solid var(--line);color:var(--muted);font-family:inherit;font-weight:700;font-size:.85rem;padding:8px 14px;border-radius:6px;cursor:pointer;margin-bottom:16px;}
+  .backbtn:hover{border-color:var(--red);color:#fff;}
   #lock{position:fixed;inset:0;background:var(--dark);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:50;padding:20px;}
   #lock .box{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--red);border-radius:10px;padding:32px 26px;width:100%;max-width:360px;text-align:center;}
   #lock h1{margin-bottom:6px;}
@@ -59,7 +65,7 @@
     <div class="box">
       <h1>FF Manage</h1>
       <p>Enter passcode to continue</p>
-      <input id="pass" type="password" placeholder="****" autocomplete="off" />
+      <input id="pass" type="password" placeholder="••••••" autocomplete="off" inputmode="numeric" />
       <button class="add" onclick="tryUnlock()">UNLOCK</button>
       <div id="lockErr"></div>
     </div>
@@ -73,20 +79,23 @@
   </div>
 
   <div id="app" class="hidden">
-    <div class="tabs">
-      <button class="tab active" data-tab="drivers">Drivers</button>
-      <button class="tab" data-tab="teams">Teams</button>
-      <button class="tab" data-tab="races">Races</button>
-      <button class="tab" data-tab="news">News</button>
-      <button class="tab" data-tab="seasons">Seasons</button>
+    <div id="adminHub" class="hub">
+      <button class="hub-card" onclick="showSection('drivers')"><span class="hub-ico">🏁</span>Drivers</button>
+      <button class="hub-card" onclick="showSection('teams')"><span class="hub-ico">👥</span>Teams</button>
+      <button class="hub-card" onclick="showSection('races')"><span class="hub-ico">🏎️</span>Races</button>
+      <button class="hub-card" onclick="showSection('news')"><span class="hub-ico">📰</span>News</button>
+      <button class="hub-card" onclick="showSection('seasons')"><span class="hub-ico">📅</span>Seasons</button>
     </div>
 
     <!-- DRIVERS -->
-    <div class="panel active" id="driversPanel">
+    <div class="panel" id="driversPanel">
+      <button class="backbtn" onclick="backToHub()">&larr; Admin home</button>
       <div class="card">
         <h2>Add Driver</h2>
         <input id="dName" placeholder="Driver name" />
         <input id="dTeam" placeholder="Team name" />
+        <input id="dNat" placeholder="Nationality code (e.g. GBR)" maxlength="3" />
+        <input id="dNumber" type="number" placeholder="Car number (optional)" />
         <input id="dPhoto" placeholder="Photo URL (optional)" />
         <div class="row"><input id="dPoints" type="number" placeholder="Points" value="0" /><input id="dWins" type="number" placeholder="Wins" value="0" /></div>
         <div class="row"><input id="dPoles" type="number" placeholder="Poles" value="0" /><input id="dRaces" type="number" placeholder="Races" value="0" /></div>
@@ -97,11 +106,16 @@
 
     <!-- TEAMS -->
     <div class="panel" id="teamsPanel">
+      <button class="backbtn" onclick="backToHub()">&larr; Admin home</button>
       <div class="card">
         <h2>Add Team</h2>
         <input id="tName" placeholder="Team name" />
         <input id="tPoints" type="number" placeholder="Points" value="0" />
         <input id="tDrivers" placeholder="Drivers (comma separated)" />
+        <input id="tLogo" placeholder="Logo URL (optional)" />
+        <input id="tCar" placeholder="Car image URL (optional)" />
+        <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Team colour</label>
+        <input id="tColor" type="color" value="#E10600" style="height:44px;padding:4px;" />
         <button class="add" onclick="addTeam()">ADD TEAM</button>
       </div>
       <div id="teamsList"><p class="empty">Loading...</p></div>
@@ -109,11 +123,13 @@
 
     <!-- RACES -->
     <div class="panel" id="racesPanel">
+      <button class="backbtn" onclick="backToHub()">&larr; Admin home</button>
       <div class="card">
         <h2>Add Race</h2>
         <input id="rName" placeholder="Race name" />
         <input id="rTrack" placeholder="Track name" />
         <input id="rDate" type="date" />
+        <input id="rImage" placeholder="Image URL (optional)" />
         <div class="row">
           <select id="rFormat"><option value="Sprint">Sprint</option><option value="Classic">Classic</option><option value="Championship">Championship</option><option value="Endurance">Endurance</option></select>
           <input id="rLaps" type="number" placeholder="Laps" value="50" />
@@ -126,10 +142,12 @@
 
     <!-- NEWS -->
     <div class="panel" id="newsPanel">
+      <button class="backbtn" onclick="backToHub()">&larr; Admin home</button>
       <div class="card">
         <h2>Add News</h2>
         <input id="nTitle" placeholder="Headline" />
         <input id="nDate" type="date" />
+        <input id="nImage" placeholder="Image URL (optional)" />
         <textarea id="nBody" placeholder="Story text..."></textarea>
         <button class="add" onclick="addNews()">ADD NEWS</button>
       </div>
@@ -138,6 +156,7 @@
 
     <!-- SEASONS -->
     <div class="panel" id="seasonsPanel">
+      <button class="backbtn" onclick="backToHub()">&larr; Admin home</button>
       <div class="card">
         <h2>Current Season</h2>
         <p class="sub" style="margin-bottom:10px;">This label shows on the site's season dropdown.</p>
@@ -169,7 +188,7 @@
    ============================================================ */
 const BIN_ID = "6a710bbdf5f4af5e29e6f916";
 const MASTER_KEY = "$2a$10$bHb8I.kdqaJKAUK/D6Ta2.z4U8kN.7gNKNFv2NDGDXQ5lDG21LS6a";
-const PASSCODE = "FF28";
+const PASSCODE = "280511";
 /* ============================================================ */
 
 const API = "https://api.jsonbin.io/v3/b/" + BIN_ID;
@@ -197,7 +216,24 @@ function num(id){ return parseInt(document.getElementById(id).value)||0; }
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function esc(s){ return (s||'').replace(/"/g,'&quot;'); }
 
-document.querySelectorAll('.tab').forEach(t=>{ t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active')); t.classList.add('active'); document.getElementById(t.dataset.tab+'Panel').classList.add('active'); editingId=null; }; });
+function showSection(name){
+  document.getElementById('adminHub').style.display='none';
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById(name+'Panel');
+  if(panel) panel.classList.add('active');
+  editingId=null;
+  if(name==='drivers') renderDrivers();
+  else if(name==='teams') renderTeams();
+  else if(name==='races') renderRaces();
+  else if(name==='news') renderNews();
+  else if(name==='seasons') renderSeasons();
+  window.scrollTo(0,0);
+}
+function backToHub(){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('adminHub').style.display='grid';
+  window.scrollTo(0,0);
+}
 
 async function loadData(){
   try{
@@ -216,13 +252,15 @@ async function save(){
 /* ---------- DRIVERS ---------- */
 async function addDriver(){
   const name=val('dName').trim(); if(!name){toast('Enter a driver name',false);return;}
-  data.drivers.push({id:uid(),name,team:val('dTeam').trim(),photo:val('dPhoto').trim(),points:num('dPoints'),wins:num('dWins'),poles:num('dPoles'),races:num('dRaces')});
-  try{ await save(); ['dName','dTeam','dPhoto'].forEach(i=>document.getElementById(i).value=''); ['dPoints','dWins','dPoles','dRaces'].forEach(i=>document.getElementById(i).value='0'); toast('Driver added'); renderDrivers(); }
+  data.drivers.push({id:uid(),name,team:val('dTeam').trim(),nationality:val('dNat').trim().toUpperCase(),number:val('dNumber').trim(),photo:val('dPhoto').trim(),points:num('dPoints'),wins:num('dWins'),poles:num('dPoles'),races:num('dRaces')});
+  try{ await save(); ['dName','dTeam','dNat','dNumber','dPhoto'].forEach(i=>document.getElementById(i).value=''); ['dPoints','dWins','dPoles','dRaces'].forEach(i=>document.getElementById(i).value='0'); toast('Driver added'); renderDrivers(); }
   catch(e){ data.drivers.pop(); toast('Error: '+e.message,false); }
 }
 async function saveDriverEdit(id){
   const d=data.drivers.find(x=>x.id===id); if(!d)return;
   d.name=document.getElementById('e_name_'+id).value.trim(); d.team=document.getElementById('e_team_'+id).value.trim(); d.photo=document.getElementById('e_photo_'+id).value.trim();
+  d.nationality=document.getElementById('e_nat_'+id).value.trim().toUpperCase();
+  d.number=document.getElementById('e_number_'+id).value.trim();
   d.points=parseInt(document.getElementById('e_points_'+id).value)||0; d.wins=parseInt(document.getElementById('e_wins_'+id).value)||0;
   d.poles=parseInt(document.getElementById('e_poles_'+id).value)||0; d.races=parseInt(document.getElementById('e_races_'+id).value)||0;
   try{ await save(); editingId=null; toast('Saved'); renderDrivers(); }catch(e){ toast('Error: '+e.message,false); }
@@ -241,6 +279,8 @@ function renderDrivers(){
       return '<div class="item"><div style="border:none;margin:0;padding:0">'
         +'<input id="e_name_'+d.id+'" value="'+esc(d.name)+'" placeholder="Name"/>'
         +'<input id="e_team_'+d.id+'" value="'+esc(d.team)+'" placeholder="Team"/>'
+        +'<input id="e_nat_'+d.id+'" value="'+esc(d.nationality)+'" placeholder="Nationality code (e.g. GBR)" maxlength="3"/>'
+        +'<input id="e_number_'+d.id+'" value="'+esc(d.number)+'" placeholder="Car number" type="number"/>'
         +'<input id="e_photo_'+d.id+'" value="'+esc(d.photo)+'" placeholder="Photo URL"/>'
         +'<div class="grid2"><div><label>Points</label><input id="e_points_'+d.id+'" type="number" value="'+(d.points||0)+'"/></div>'
         +'<div><label>Wins</label><input id="e_wins_'+d.id+'" type="number" value="'+(d.wins||0)+'"/></div>'
@@ -251,7 +291,7 @@ function renderDrivers(){
     }
     const av=d.photo?'<img class="avatar" src="'+esc(d.photo)+'" onerror="this.style.display=\'none\'"/>':'';
     return '<div class="item"><div class="top">'+av+'<div class="info">'
-      +'<div class="name">'+(d.name||'-')+'</div><div class="meta">'+(d.team||'No team')+'</div>'
+      +'<div class="name">'+(d.name||'-')+'</div><div class="meta">'+(d.team||'No team')+(d.nationality?' &middot; '+d.nationality:'')+'</div>'
       +'<div class="stats">'+(d.points||0)+' pts &middot; '+(d.wins||0)+'W &middot; '+(d.poles||0)+' poles &middot; '+(d.races||0)+' races</div></div>'
       +'<div class="btns"><button class="edit" onclick="editingId=\''+d.id+'\';renderDrivers()">Edit</button>'
       +'<button class="del" onclick="delDriver(\''+d.id+'\')">Del</button></div></div></div>';
@@ -261,13 +301,16 @@ function renderDrivers(){
 /* ---------- TEAMS ---------- */
 async function addTeam(){
   const name=val('tName').trim(); if(!name){toast('Enter a team name',false);return;}
-  data.teams.push({id:uid(),name,points:num('tPoints'),drivers:val('tDrivers').split(',').map(s=>s.trim()).filter(Boolean)});
-  try{ await save(); document.getElementById('tName').value=''; document.getElementById('tDrivers').value=''; document.getElementById('tPoints').value='0'; toast('Team added'); renderTeams(); }
+  data.teams.push({id:uid(),name,points:num('tPoints'),color:val('tColor'),logo:val('tLogo').trim(),car:val('tCar').trim(),drivers:val('tDrivers').split(',').map(s=>s.trim()).filter(Boolean)});
+  try{ await save(); document.getElementById('tName').value=''; document.getElementById('tDrivers').value=''; document.getElementById('tPoints').value='0'; document.getElementById('tColor').value='#E10600'; document.getElementById('tLogo').value=''; document.getElementById('tCar').value=''; toast('Team added'); renderTeams(); }
   catch(e){ data.teams.pop(); toast('Error: '+e.message,false); }
 }
 async function saveTeamEdit(id){
   const t=data.teams.find(x=>x.id===id); if(!t)return;
   t.name=document.getElementById('e_tname_'+id).value.trim(); t.points=parseInt(document.getElementById('e_tpoints_'+id).value)||0;
+  t.color=document.getElementById('e_tcolor_'+id).value;
+  t.logo=document.getElementById('e_tlogo_'+id).value.trim();
+  t.car=document.getElementById('e_tcar_'+id).value.trim();
   t.drivers=document.getElementById('e_tdrivers_'+id).value.split(',').map(s=>s.trim()).filter(Boolean);
   try{ await save(); editingId=null; toast('Saved'); renderTeams(); }catch(e){ toast('Error: '+e.message,false); }
 }
@@ -286,11 +329,15 @@ function renderTeams(){
         +'<input id="e_tname_'+t.id+'" value="'+esc(t.name)+'" placeholder="Team name"/>'
         +'<input id="e_tpoints_'+t.id+'" type="number" value="'+(t.points||0)+'" placeholder="Points"/>'
         +'<input id="e_tdrivers_'+t.id+'" value="'+esc((t.drivers||[]).join(', '))+'" placeholder="Drivers (comma separated)"/>'
+        +'<input id="e_tlogo_'+t.id+'" value="'+esc(t.logo)+'" placeholder="Logo URL (optional)"/>'
+        +'<input id="e_tcar_'+t.id+'" value="'+esc(t.car)+'" placeholder="Car image URL (optional)"/>'
+        +'<label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:3px;">Team colour</label>'
+        +'<input id="e_tcolor_'+t.id+'" type="color" value="'+(t.color||'#E10600')+'" style="height:44px;padding:4px;"/>'
         +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveTeamEdit(\''+t.id+'\')">Save</button>'
         +'<button class="cancel" onclick="editingId=null;renderTeams()">Cancel</button></div></div></div>';
     }
     return '<div class="item"><div class="top"><div class="info">'
-      +'<div class="name">'+(t.name||'-')+'</div><div class="meta">'+(t.points||0)+' pts</div>'
+      +'<div class="name"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px;background:'+(t.color||'#E10600')+'"></span>'+(t.name||'-')+'</div><div class="meta">'+(t.points||0)+' pts</div>'
       +'<div class="stats">'+((t.drivers&&t.drivers.length)?t.drivers.join(', '):'No drivers')+'</div></div>'
       +'<div class="btns"><button class="edit" onclick="editingId=\''+t.id+'\';renderTeams()">Edit</button>'
       +'<button class="del" onclick="delTeam(\''+t.id+'\')">Del</button></div></div></div>';
@@ -298,23 +345,24 @@ function renderTeams(){
 }
 
 /* ---------- RACES ---------- */
-function resultsToText(results){ return (results||[]).map(r=>r.driver+', '+r.pos+', '+r.pts).join('\n'); }
+function resultsToText(results){ return (results||[]).map(r=>r.driver+', '+r.pos+', '+r.pts+(r.time?', '+r.time:'')).join('\n'); }
 function textToResults(text){
   return (text||'').split('\n').map(line=>{
     const p=line.split(','); if(!p[0]||!p[0].trim())return null;
-    return { driver:p[0].trim(), pos:parseInt(p[1])||0, pts:parseInt(p[2])||0 };
+    return { driver:p[0].trim(), pos:parseInt(p[1])||0, pts:parseInt(p[2])||0, time:(p[3]||'').trim() };
   }).filter(Boolean);
 }
 async function addRace(){
   const name=val('rName').trim(); if(!name){toast('Enter a race name',false);return;}
-  data.races.push({id:uid(),name,track:val('rTrack').trim(),date:val('rDate'),format:val('rFormat'),laps:num('rLaps'),status:val('rStatus'),results:[]});
-  try{ await save(); ['rName','rTrack','rDate'].forEach(i=>document.getElementById(i).value=''); document.getElementById('rLaps').value='50'; toast('Race added'); renderRaces(); }
+  data.races.push({id:uid(),name,track:val('rTrack').trim(),date:val('rDate'),image:val('rImage').trim(),format:val('rFormat'),laps:num('rLaps'),status:val('rStatus'),results:[]});
+  try{ await save(); ['rName','rTrack','rDate','rImage'].forEach(i=>document.getElementById(i).value=''); document.getElementById('rLaps').value='50'; toast('Race added'); renderRaces(); }
   catch(e){ data.races.pop(); toast('Error: '+e.message,false); }
 }
 async function saveRaceEdit(id){
   const r=data.races.find(x=>x.id===id); if(!r)return;
   r.name=document.getElementById('e_rname_'+id).value.trim(); r.track=document.getElementById('e_rtrack_'+id).value.trim();
   r.date=document.getElementById('e_rdate_'+id).value; r.format=document.getElementById('e_rformat_'+id).value;
+  r.image=document.getElementById('e_rimage_'+id).value.trim();
   r.laps=parseInt(document.getElementById('e_rlaps_'+id).value)||0; r.status=document.getElementById('e_rstatus_'+id).value;
   r.results=textToResults(document.getElementById('e_rresults_'+id).value);
   try{ await save(); editingId=null; toast('Saved'); renderRaces(); }catch(e){ toast('Error: '+e.message,false); }
@@ -375,11 +423,12 @@ function renderRaces(){
         +'<input id="e_rname_'+r.id+'" value="'+esc(r.name)+'" placeholder="Race name"/>'
         +'<input id="e_rtrack_'+r.id+'" value="'+esc(r.track)+'" placeholder="Track"/>'
         +'<input id="e_rdate_'+r.id+'" type="date" value="'+(r.date||'')+'"/>'
+        +'<input id="e_rimage_'+r.id+'" value="'+esc(r.image)+'" placeholder="Image URL (optional)"/>'
         +'<div class="row"><select id="e_rformat_'+r.id+'">'+fmts.map(f=>'<option value="'+f+'"'+(r.format===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'
         +'<input id="e_rlaps_'+r.id+'" type="number" value="'+(r.laps||0)+'"/></div>'
         +'<select id="e_rstatus_'+r.id+'"><option value="upcoming"'+(r.status==='upcoming'?' selected':'')+'>Upcoming</option><option value="completed"'+(r.status==='completed'?' selected':'')+'>Completed</option></select>'
-        +'<label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:3px;">Results — one per line: Driver, position, points</label>'
-        +'<textarea id="e_rresults_'+r.id+'" placeholder="Alex Racer, 1, 25&#10;Jordan Swift, 2, 18">'+resultsToText(r.results)+'</textarea>'
+        +'<label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:3px;">Results — one per line: Driver, position, points, time (time optional)</label>'
+        +'<textarea id="e_rresults_'+r.id+'" placeholder="Alex Racer, 1, 25, 1:23:06&#10;Jordan Swift, 2, 18">'+resultsToText(r.results)+'</textarea>'
         +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveRaceEdit(\''+r.id+'\')">Save</button>'
         +'<button class="cancel" onclick="editingId=null;renderRaces()">Cancel</button></div></div></div>';
     }
@@ -394,13 +443,14 @@ function renderRaces(){
 /* ---------- NEWS ---------- */
 async function addNews(){
   const title=val('nTitle').trim(); if(!title){toast('Enter a headline',false);return;}
-  data.news.push({id:uid(),title,body:val('nBody').trim(),date:val('nDate')||new Date().toISOString().slice(0,10)});
-  try{ await save(); ['nTitle','nBody','nDate'].forEach(i=>document.getElementById(i).value=''); toast('News added'); renderNews(); }
+  data.news.push({id:uid(),title,body:val('nBody').trim(),image:val('nImage').trim(),date:val('nDate')||new Date().toISOString().slice(0,10)});
+  try{ await save(); ['nTitle','nBody','nDate','nImage'].forEach(i=>document.getElementById(i).value=''); toast('News added'); renderNews(); }
   catch(e){ data.news.pop(); toast('Error: '+e.message,false); }
 }
 async function saveNewsEdit(id){
   const n=data.news.find(x=>x.id===id); if(!n)return;
   n.title=document.getElementById('e_ntitle_'+id).value.trim(); n.date=document.getElementById('e_ndate_'+id).value;
+  n.image=document.getElementById('e_nimage_'+id).value.trim();
   n.body=document.getElementById('e_nbody_'+id).value.trim();
   try{ await save(); editingId=null; toast('Saved'); renderNews(); }catch(e){ toast('Error: '+e.message,false); }
 }
@@ -418,6 +468,7 @@ function renderNews(){
       return '<div class="item"><div style="border:none;margin:0;padding:0">'
         +'<input id="e_ntitle_'+n.id+'" value="'+esc(n.title)+'" placeholder="Headline"/>'
         +'<input id="e_ndate_'+n.id+'" type="date" value="'+(n.date||'')+'"/>'
+        +'<input id="e_nimage_'+n.id+'" value="'+esc(n.image)+'" placeholder="Image URL (optional)"/>'
         +'<textarea id="e_nbody_'+n.id+'" placeholder="Story text">'+(n.body||'')+'</textarea>'
         +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveNewsEdit(\''+n.id+'\')">Save</button>'
         +'<button class="cancel" onclick="editingId=null;renderNews()">Cancel</button></div></div></div>';

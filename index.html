@@ -19,6 +19,7 @@
             <ul class="nav-menu">
                 <li><a href="#" class="nav-link active" data-page="home">HOME</a></li>
                 <li><a href="#" class="nav-link" data-page="standings">STANDINGS</a></li>
+                <li><a href="#" class="nav-link" data-page="results">RESULTS</a></li>
                 <li><a href="#" class="nav-link" data-page="calendar">CALENDAR</a></li>
                 <li><a href="#" class="nav-link" data-page="teams">TEAMS</a></li>
                 <li><a href="#" class="nav-link" data-page="drivers">DRIVERS</a></li>
@@ -36,94 +37,101 @@
     <main class="container">
         <!-- HOME -->
         <section id="home" class="page active">
-            <div class="hero">
-                <div class="hero-content">
-                    <h1 class="hero-title">FORMULA FORTNITE</h1>
-                    <p class="hero-subtitle">Elite Competitive Racing</p>
-                    <div class="hero-stat"><span class="stat-number" id="activePilots">0</span><span class="stat-label">Active Pilots</span></div>
-                </div>
-            </div>
-            <section class="race-card">
-                <div class="race-header"><h2>NEXT RACE</h2><span class="race-num" id="raceNumber">01</span></div>
-                <div class="race-details">
-                    <div class="race-info">
-                        <h3 id="raceName">Loading...</h3>
-                        <p class="race-track" id="raceTrack">-</p>
-                        <p class="race-date" id="raceDate">-</p>
-                    </div>
-                    <div class="race-meta">
-                        <div class="meta-item"><span class="meta-label">Format</span><span class="meta-value" id="raceFormat">-</span></div>
-                        <div class="meta-item"><span class="meta-label">Laps</span><span class="meta-value" id="raceLaps">-</span></div>
-                    </div>
-                </div>
+            <div class="race-strip" id="raceStrip"></div>
+
+            <section class="home-news">
+                <div class="news-hero" id="newsHero"></div>
+                <div class="news-side" id="newsSide"></div>
             </section>
-            <section class="standings-preview">
-                <h2>CHAMPIONSHIP STANDINGS</h2>
+
+            <section class="season-block">
+                <div class="season-divider"></div>
+                <div class="season-head">
+                    <h2 id="seasonHeading">SEASON</h2>
+                    <select id="homeSeasonSelect"></select>
+                </div>
+                <div class="standings-controls">
+                    <button class="tab-btn htab-btn active" data-htab="drivers">DRIVERS</button>
+                    <button class="tab-btn htab-btn" data-htab="teams">TEAMS</button>
+                </div>
+                <div class="podium" id="podium"></div>
                 <div class="table-container">
-                    <table class="standings-table">
-                        <thead><tr><th class="pos">POS</th><th class="driver">DRIVER</th><th class="team">TEAM</th><th class="points">POINTS</th></tr></thead>
-                        <tbody id="standingsBody"><tr class="loading"><td colspan="4">Loading...</td></tr></tbody>
+                    <table class="standings-table full">
+                        <thead><tr><th class="pos">POS</th><th class="driver">DRIVER</th><th class="team">TEAM</th><th class="points">PTS</th></tr></thead>
+                        <tbody id="homeStandingsBody"><tr class="loading"><td colspan="4">Loading...</td></tr></tbody>
                     </table>
                 </div>
                 <a href="#" class="btn btn-secondary" data-page="standings">VIEW FULL STANDINGS &rarr;</a>
-            </section>
-            <section class="news-section">
-                <h2>LATEST NEWS</h2>
-                <div class="news-grid" id="newsGrid">
-                    <div class="news-card loading"><div class="news-placeholder"></div></div>
-                    <div class="news-card loading"><div class="news-placeholder"></div></div>
-                    <div class="news-card loading"><div class="news-placeholder"></div></div>
-                </div>
             </section>
         </section>
 
         <!-- STANDINGS -->
         <section id="standings" class="page">
-            <h1 class="page-title">CHAMPIONSHIP STANDINGS</h1>
-            <div class="season-bar">
-                <span class="season-label">SEASON</span>
+            <div class="cal-top">
                 <select id="seasonSelect"></select>
             </div>
             <div class="standings-controls">
                 <button class="tab-btn active" data-tab="drivers">DRIVERS</button>
                 <button class="tab-btn" data-tab="teams">TEAMS</button>
             </div>
-            <div class="table-container">
-                <table class="standings-table full">
-                    <thead><tr>
-                        <th class="pos">POS</th><th class="driver">DRIVER</th><th class="team">TEAM</th>
-                        <th class="points">POINTS</th><th class="races">RACES</th><th class="wins">WINS</th><th class="poles">POLES</th>
-                    </tr></thead>
-                    <tbody id="fullStandingsBody"><tr class="loading"><td colspan="7">Loading...</td></tr></tbody>
-                </table>
-            </div>
+            <h1 class="cal-title" id="standingsTitle">DRIVERS' STANDINGS</h1>
+            <div class="results-panel" id="standingsPanel"><div class="loading">Loading standings...</div></div>
             <div id="seasonRaces"></div>
+        </section>
+
+        <!-- RESULTS -->
+        <section id="results" class="page">
+            <div class="cal-top">
+                <select id="resultsSeasonSelect"></select>
+            </div>
+            <div class="standings-controls">
+                <button class="tab-btn rtab-btn active" data-rtab="races">RACES</button>
+                <button class="tab-btn rtab-btn" data-rtab="drivers">DRIVERS</button>
+                <button class="tab-btn rtab-btn" data-rtab="teams">TEAMS</button>
+            </div>
+            <h1 class="cal-title" id="resultsTitle">RACE RESULTS</h1>
+            <div class="results-panel" id="resultsPanel"><div class="loading">Loading results...</div></div>
         </section>
 
         <!-- CALENDAR -->
         <section id="calendar" class="page">
-            <h1 class="page-title">RACE CALENDAR</h1>
-            <div class="calendar-container" id="calendarContainer"><div class="loading">Loading calendar...</div></div>
+            <div class="cal-top">
+                <select id="calSeasonSelect"></select>
+            </div>
+            <h1 class="cal-title" id="calTitle">RACE CALENDAR</h1>
+            <div class="cal-featured" id="calFeatured"></div>
+            <div class="cal-grid" id="calGrid"><div class="loading">Loading calendar...</div></div>
         </section>
 
         <!-- TEAMS -->
         <section id="teams" class="page">
-            <h1 class="page-title">TEAMS</h1>
-            <div class="teams-grid" id="teamsGrid">
-                <div class="team-card loading"></div><div class="team-card loading"></div><div class="team-card loading"></div>
+            <h1 class="cal-title" id="teamsTitle">FF TEAMS</h1>
+            <p class="drivers-sub">Find the current Formula Fortnite teams for the season.</p>
+            <div class="f1-teams-grid" id="teamsGrid">
+                <div class="team-card loading"></div><div class="team-card loading"></div>
+            </div>
+            <div class="drivers-banner" data-page="drivers">
+                <h2 data-page="drivers">FF DRIVERS</h2>
+                <p data-page="drivers">Check out this season's line-up by following your favourite drivers on and off the track.</p>
+                <span class="db-btn" data-page="drivers">Find out more &rarr;</span>
             </div>
         </section>
 
         <!-- DRIVERS -->
         <section id="drivers" class="page">
-            <h1 class="page-title">DRIVERS</h1>
-            <div class="drivers-grid" id="driversGrid">
+            <h1 class="cal-title" id="driversTitle">FF DRIVERS</h1>
+            <p class="drivers-sub">Find the current Formula Fortnite drivers for the season.</p>
+            <div class="f1-drivers-grid" id="driversGrid">
                 <div class="driver-card loading"></div><div class="driver-card loading"></div><div class="driver-card loading"></div>
+            </div>
+            <div class="hof-banner" data-page="standings">
+                <h2 data-page="standings">FF HALL OF FAME</h2>
+                <p data-page="standings">Browse past-season champions and full standings.</p>
+                <span class="hof-btn" data-page="standings">View past seasons &rarr;</span>
             </div>
         </section>
     </main>
 
-    <!-- MODAL -->
     <div id="modal" class="modal hidden">
         <div class="modal-inner">
             <button id="modalClose" class="modal-close">&times;</button>

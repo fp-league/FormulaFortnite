@@ -1,4 +1,4 @@
-const CACHE_NAME = 'formula-fortnite-v3';
+const CACHE_NAME = 'formula-fortnite-v10';
 const urlsToCache = [
     './',
     './index.html',
@@ -17,30 +17,31 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(cacheNames =>
-            Promise.all(cacheNames.map(name => {
-                if (name !== CACHE_NAME) return caches.delete(name);
-            }))
+        caches.keys().then(names =>
+            Promise.all(names.map(name => { if (name !== CACHE_NAME) return caches.delete(name); }))
         )
     );
     self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-    // Always go to network for the JSON database (fresh data)
-    if (event.request.url.includes('api.jsonbin.io')) {
-        event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+    const req = event.request;
+    if (req.method !== 'GET') return;
+
+    // Live database: always fresh, fall back to cache offline
+    if (req.url.includes('api.jsonbin.io')) {
+        event.respondWith(fetch(req).catch(() => caches.match(req)));
         return;
     }
-    // Cache-first for everything else
+
+    // App files: NETWORK FIRST — always try the latest, cache as backup.
     event.respondWith(
-        caches.match(event.request).then(response =>
-            response || fetch(event.request).then(resp => {
-                return caches.open(CACHE_NAME).then(cache => {
-                    cache.put(event.request, resp.clone());
-                    return resp;
-                });
+        fetch(req)
+            .then(resp => {
+                const copy = resp.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(req, copy)).catch(() => {});
+                return resp;
             })
-        )
+            .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
     );
 });
