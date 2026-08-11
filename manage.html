@@ -429,7 +429,7 @@ async function scanResults(raceId){
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_API_KEY},
       body:JSON.stringify({
-        model:'llama-3.2-90b-vision-preview',
+        model:'qwen/qwen3.6-27b',
         max_tokens:1000,
         messages:[{role:'user',content:[
           {type:'image_url',image_url:{url:'data:'+mediaType+';base64,'+base64}},
