@@ -188,8 +188,8 @@
    ============================================================ */
 const BIN_ID = "6a710bbdf5f4af5e29e6f916";
 const MASTER_KEY = "$2a$10$bHb8I.kdqaJKAUK/D6Ta2.z4U8kN.7gNKNFv2NDGDXQ5lDG21LS6a";
-const GROQ_API_KEY = "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";
 const PASSCODE = "280511";
+const GROQ_API_KEY = "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";
 /* ============================================================ */
 
 const API = "https://api.jsonbin.io/v3/b/" + BIN_ID;
@@ -394,6 +394,46 @@ async function delArchive(nm){
   const b=data.archive[nm]; delete data.archive[nm];
   try{ await save(); toast('Deleted'); renderSeasons(); }catch(e){ data.archive[nm]=b; toast('Error: '+e.message,false); }
 }
+/* ---------- SCAN RESULTS FROM SCREENSHOT ---------- */
+async function scanResults(raceId){
+  const input=document.getElementById('e_rscan_'+raceId);
+  const status=document.getElementById('e_rscanstatus_'+raceId);
+  const textarea=document.getElementById('e_rresults_'+raceId);
+  if(!input.files||!input.files[0]){return;}
+  if(GROQ_API_KEY==='YOUR_GROQ_API_KEY'){toast('Add your Groq API key in manage.html first',false);return;}
+  status.textContent='Reading screenshot...';
+  try{
+    const file=input.files[0];
+    const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=()=>rej(new Error('Read failed'));r.readAsDataURL(file);});
+    const mediaType=file.type||'image/png';
+    const resp=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_API_KEY},
+      body:JSON.stringify({
+        model:'llama-3.2-90b-vision-preview',
+        max_tokens:1000,
+        messages:[{role:'user',content:[
+          {type:'image_url',image_url:{url:'data:'+mediaType+';base64,'+base64}},
+          {type:'text',text:'Extract race results from this image. Return ONLY lines in this exact format, nothing else:\nDriverName, position, points, time\n\nposition is their finishing position (1,2,3...). points is their championship points scored. If you cannot see points, estimate using standard F1 points (25,18,15,12,10,8,6,4,2,1). If time is not visible, leave it blank. One driver per line. No headers, no extra text.'}
+        ]}]
+      })
+    });
+    if(!resp.ok){const e=await resp.text();throw new Error('API '+resp.status+': '+e);}
+    const json=await resp.json();
+    const text=(json.choices||[])[0]?.message?.content?.trim()||'';
+    if(text){
+      textarea.value=text;
+      status.innerHTML='<span style="color:#4CAF50;">✓ Results extracted — review and hit Save</span>';
+    }else{
+      status.textContent='No results found in image.';
+    }
+  }catch(e){
+    status.textContent='Error: '+e.message;
+    toast('Scan failed: '+e.message,false);
+  }
+  input.value='';
+}
+
 function renderSeasons(){
   document.getElementById('seasonName').value=data.seasonName||'';
   const list=document.getElementById('seasonsList');
@@ -430,6 +470,9 @@ function renderRaces(){
         +'<select id="e_rstatus_'+r.id+'"><option value="upcoming"'+(r.status==='upcoming'?' selected':'')+'>Upcoming</option><option value="completed"'+(r.status==='completed'?' selected':'')+'>Completed</option></select>'
         +'<label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:3px;">Results — one per line: Driver, position, points, time (time optional)</label>'
         +'<textarea id="e_rresults_'+r.id+'" placeholder="Alex Racer, 1, 25, 1:23:06&#10;Jordan Swift, 2, 18">'+resultsToText(r.results)+'</textarea>'
+        +'<input type="file" id="e_rscan_'+r.id+'" accept="image/*" style="display:none;" onchange="scanResults(\''+r.id+'\')">'
+        +'<button class="edit" style="width:100%;margin-top:6px;text-align:center;padding:10px;" onclick="document.getElementById(\'e_rscan_'+r.id+'\').click()">📷 Scan results from screenshot</button>'
+        +'<div id="e_rscanstatus_'+r.id+'" style="font-size:.8rem;color:var(--muted);margin-top:6px;"></div>'
         +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveRaceEdit(\''+r.id+'\')">Save</button>'
         +'<button class="cancel" onclick="editingId=null;renderRaces()">Cancel</button></div></div></div>';
     }
