@@ -433,7 +433,7 @@ async function scanResults(raceId){
         max_tokens:1000,
         messages:[{role:'user',content:[
           {type:'image_url',image_url:{url:'data:'+mediaType+';base64,'+base64}},
-          {type:'text',text:'Extract race results from this image. Return ONLY lines in this exact format, nothing else:\nDriverName, position, points, time\n\nposition is their finishing position (1,2,3...). points is their championship points scored. If you cannot see points, use this points system: '+getPointsArray().map((p,i)=>'P'+(i+1)+'='+p).join(', ')+'. If time is not visible, leave it blank. One driver per line. No headers, no extra text.'}
+          {type:'text',text:'Extract race results from this image. Return ONLY lines in this exact format, nothing else:\nDriverName, position, points\n\nposition is their finishing position (1,2,3...). points is their championship points scored. If you cannot see points, use this points system: '+getPointsArray().map((p,i)=>'P'+(i+1)+'='+p).join(', ')+'. One driver per line. No headers, no extra text, no time.'}
         ]}]
       })
     });
