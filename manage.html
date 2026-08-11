@@ -164,6 +164,14 @@
         <button class="add" onclick="saveSeasonName()">SAVE SEASON NAME</button>
       </div>
       <div class="card">
+        <h2>Points System</h2>
+        <p class="sub" style="margin-bottom:10px;">Points awarded per position. Comma separated, 1st place first.</p>
+        <input id="pointsSystem" placeholder="e.g. 25, 18, 15, 12, 10, 8, 6, 4, 2, 1" />
+        <p class="sub" style="margin-bottom:10px;">Preview:</p>
+        <div id="pointsPreview" style="font-size:.85rem;color:var(--muted);margin-bottom:10px;"></div>
+        <button class="add" onclick="savePointsSystem()">SAVE POINTS SYSTEM</button>
+      </div>
+      <div class="card">
         <h2>Archive Season</h2>
         <p class="sub" style="margin-bottom:10px;">Saves a frozen snapshot of current drivers, teams & races under a season name. Nothing is deleted.</p>
         <input id="archiveName" placeholder="Season to save as, e.g. 2025" />
@@ -241,7 +249,7 @@ async function loadData(){
     const res=await fetch(API+"/latest",{headers:{"X-Master-Key":MASTER_KEY}});
     if(!res.ok) throw new Error("HTTP "+res.status);
     const json=await res.json(); const r=json.record||{};
-    data={ seasonName:r.seasonName||'2026', drivers:Array.isArray(r.drivers)?r.drivers:[], teams:Array.isArray(r.teams)?r.teams:[], races:Array.isArray(r.races)?r.races:[], news:Array.isArray(r.news)?r.news:[], archive:(r.archive&&typeof r.archive==='object')?r.archive:{} };
+    data={ seasonName:r.seasonName||'2026', pointsSystem:r.pointsSystem||'25,18,15,12,10,8,6,4,2,1', drivers:Array.isArray(r.drivers)?r.drivers:[], teams:Array.isArray(r.teams)?r.teams:[], races:Array.isArray(r.races)?r.races:[], news:Array.isArray(r.news)?r.news:[], archive:(r.archive&&typeof r.archive==='object')?r.archive:{} };
     renderDrivers(); renderTeams(); renderRaces(); renderNews(); renderSeasons();
   }catch(e){ document.getElementById('driversList').innerHTML='<p class="empty">Error: '+e.message+'</p>'; toast('Load failed: '+e.message,false); }
 }
@@ -371,6 +379,17 @@ async function saveRaceEdit(id){
 
 /* ---------- SEASONS ---------- */
 function saveSeasonName(){ (async()=>{ data.seasonName=val('seasonName').trim()||data.seasonName; try{ await save(); toast('Season name saved'); }catch(e){ toast('Error: '+e.message,false); } })(); }
+function getPointsArray(){ return (data.pointsSystem||'25,18,15,12,10,8,6,4,2,1').split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)); }
+function updatePointsPreview(){
+  const pts=getPointsArray();
+  const el=document.getElementById('pointsPreview');
+  if(!el)return;
+  el.innerHTML=pts.map((p,i)=>'<span style="display:inline-block;background:var(--surface2);padding:4px 8px;border-radius:4px;margin:2px;font-size:.8rem;"><b>P'+(i+1)+'</b> '+p+'pts</span>').join('');
+}
+async function savePointsSystem(){
+  data.pointsSystem=val('pointsSystem').trim()||data.pointsSystem;
+  try{ await save(); toast('Points system saved'); updatePointsPreview(); }catch(e){ toast('Error: '+e.message,false); }
+}
 async function archiveSeason(){
   const nm=val('archiveName').trim(); if(!nm){toast('Enter a season name to save as',false);return;}
   if(!data.archive) data.archive={};
@@ -414,7 +433,7 @@ async function scanResults(raceId){
         max_tokens:1000,
         messages:[{role:'user',content:[
           {type:'image_url',image_url:{url:'data:'+mediaType+';base64,'+base64}},
-          {type:'text',text:'Extract race results from this image. Return ONLY lines in this exact format, nothing else:\nDriverName, position, points, time\n\nposition is their finishing position (1,2,3...). points is their championship points scored. If you cannot see points, estimate using standard F1 points (25,18,15,12,10,8,6,4,2,1). If time is not visible, leave it blank. One driver per line. No headers, no extra text.'}
+          {type:'text',text:'Extract race results from this image. Return ONLY lines in this exact format, nothing else:\nDriverName, position, points, time\n\nposition is their finishing position (1,2,3...). points is their championship points scored. If you cannot see points, use this points system: '+getPointsArray().map((p,i)=>'P'+(i+1)+'='+p).join(', ')+'. If time is not visible, leave it blank. One driver per line. No headers, no extra text.'}
         ]}]
       })
     });
@@ -436,6 +455,8 @@ async function scanResults(raceId){
 
 function renderSeasons(){
   document.getElementById('seasonName').value=data.seasonName||'';
+  document.getElementById('pointsSystem').value=data.pointsSystem||'25,18,15,12,10,8,6,4,2,1';
+  updatePointsPreview();
   const list=document.getElementById('seasonsList');
   const keys=Object.keys(data.archive||{});
   if(!keys.length){ list.innerHTML='<p class="empty">No archived seasons yet.</p>'; return; }
