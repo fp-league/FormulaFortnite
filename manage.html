@@ -439,7 +439,11 @@ async function scanResults(raceId){
     });
     if(!resp.ok){const e=await resp.text();throw new Error('API '+resp.status+': '+e);}
     const json=await resp.json();
-    const text=(json.choices||[])[0]?.message?.content?.trim()||'';
+    let text=(json.choices||[])[0]?.message?.content?.trim()||'';
+    // Strip <think>...</think> blocks and any preamble
+    text=text.replace(/<think>[\s\S]*?<\/think>/gi,'').trim();
+    // Only keep lines matching "something, number, number" format
+    text=text.split('\n').filter(line=>{const p=line.split(',');return p.length>=3&&p[0].trim()&&!isNaN(parseInt(p[1]));}).join('\n');
     if(text){
       textarea.value=text;
       status.innerHTML='<span style="color:#4CAF50;">✓ Results extracted — review and hit Save</span>';
