@@ -1,4 +1,4 @@
-const CACHE_NAME = 'formula-fortnite-v11';
+const CACHE_NAME = 'formula-fortnite-v15';
 const urlsToCache = [
     './',
     './index.html',
