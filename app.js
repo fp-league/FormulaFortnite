@@ -417,7 +417,9 @@ function calCard(r, roundNo, isNext, teamsArr, driversArr) {
     } else {
         bottom = `<div class="cal-card-foot"><span class="cal-fmt">${r.format || ''} &middot; ${r.laps || 0} laps</span><span class="cal-circuit-wrap">${CIRCUIT_SVG}</span></div>`;
     }
+    const imgBg = r.image ? `<div class="cal-card-bg" style="background-image:url('${r.image}')"></div>` : '';
     return `<div class="cal-card ${isNext ? 'next' : ''}" data-round="${roundNo}">
+        ${imgBg}
         <div class="cal-card-head">
             <span class="cal-round">ROUND ${String(roundNo).padStart(2, '0')}</span>
             ${isNext ? '<span class="cal-next-badge">NEXT RACE</span>' : `<span class="cal-date">${dr}</span>`}

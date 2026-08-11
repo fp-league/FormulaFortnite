@@ -625,3 +625,18 @@ body::after {
 .db-btn { display: inline-block; background: #fff; color: var(--f1-red); font-family: var(--font-display); font-weight: 700; font-size: 0.85rem; padding: 0.7rem 1.4rem; border-radius: 6px; }
 
 @media (max-width: 780px) { .f1-teams-grid { grid-template-columns: 1fr; } }
+
+/* ==================== CALENDAR CARD BACKGROUND IMAGE ==================== */
+.cal-card { position: relative; }
+.cal-card-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.15;
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 0;
+}
+.cal-card.next .cal-card-bg { opacity: 0.2; }
+.cal-card-head, .cal-name, .cal-track, .cal-date-lg, .cal-card-foot, .cal-podium, .cal-next-badge, .cal-round, .cal-date { position: relative; z-index: 1; }
