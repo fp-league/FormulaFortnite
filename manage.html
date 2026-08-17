@@ -44,7 +44,13 @@
   #toast.ok{background:#00913c;color:#fff;display:block;} #toast.err{background:#c31200;color:#fff;display:block;}
   #setup{background:#2a1400;border:1px solid var(--red);border-radius:8px;padding:14px;margin-bottom:16px;font-size:.85rem;line-height:1.5;}
   #setup code{background:#000;padding:2px 5px;border-radius:3px;color:var(--red);}
-  .hidden{display:none;}
+  .results-builder{background:var(--surface2);border-radius:6px;padding:10px;margin-top:8px;}
+  .rb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .rb-rows{display:flex;flex-direction:column;gap:8px;}
+  .rb-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .rb-driver{flex:1;min-width:140px;}
+  .rb-pos,.rb-pts{width:70px!important;margin-bottom:0!important;}
+  .rb-row .del{flex-shrink:0;padding:7px 10px!important;}
   .hub{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px;}
   .hub-card{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--red);border-radius:10px;padding:22px 16px;color:#fff;font-family:inherit;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .2s;}
   .hub-card:hover{border-color:var(--red);transform:translateY(-2px);}
@@ -197,7 +203,6 @@
 const BIN_ID = "6a710bbdf5f4af5e29e6f916";
 const MASTER_KEY = "$2a$10$bHb8I.kdqaJKAUK/D6Ta2.z4U8kN.7gNKNFv2NDGDXQ5lDG21LS6a";
 const PASSCODE = "280511";
-const GROQ_API_KEY = "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";
 /* ============================================================ */
 
 const API = "https://api.jsonbin.io/v3/b/" + BIN_ID;
@@ -354,11 +359,11 @@ function renderTeams(){
 }
 
 /* ---------- RACES ---------- */
-function resultsToText(results){ return (results||[]).map(r=>r.driver+', '+r.pos+', '+r.pts+(r.time?', '+r.time:'')).join('\n'); }
+function resultsToText(results){ return (results||[]).map(r=>r.driver+', '+r.pos+', '+r.pts).join('\n'); }
 function textToResults(text){
   return (text||'').split('\n').map(line=>{
     const p=line.split(','); if(!p[0]||!p[0].trim())return null;
-    return { driver:p[0].trim(), pos:parseInt(p[1])||0, pts:parseInt(p[2])||0, time:(p[3]||'').trim() };
+    return { driver:p[0].trim(), pos:parseInt(p[1])||0, pts:parseInt(p[2])||0 };
   }).filter(Boolean);
 }
 async function addRace(){
@@ -373,7 +378,7 @@ async function saveRaceEdit(id){
   r.date=document.getElementById('e_rdate_'+id).value; r.format=document.getElementById('e_rformat_'+id).value;
   r.image=document.getElementById('e_rimage_'+id).value.trim();
   r.laps=parseInt(document.getElementById('e_rlaps_'+id).value)||0; r.status=document.getElementById('e_rstatus_'+id).value;
-  r.results=textToResults(document.getElementById('e_rresults_'+id).value);
+  r.results=readResultRows(id);
   try{ await save(); editingId=null; toast('Saved'); renderRaces(); }catch(e){ toast('Error: '+e.message,false); }
 }
 
@@ -413,48 +418,63 @@ async function delArchive(nm){
   const b=data.archive[nm]; delete data.archive[nm];
   try{ await save(); toast('Deleted'); renderSeasons(); }catch(e){ data.archive[nm]=b; toast('Error: '+e.message,false); }
 }
-/* ---------- SCAN RESULTS FROM SCREENSHOT ---------- */
-async function scanResults(raceId){
-  const input=document.getElementById('e_rscan_'+raceId);
-  const status=document.getElementById('e_rscanstatus_'+raceId);
-  const textarea=document.getElementById('e_rresults_'+raceId);
-  if(!input.files||!input.files[0]){return;}
-  if(GROQ_API_KEY==='YOUR_GROQ_API_KEY'){toast('Add your Groq API key in manage.html first',false);return;}
-  status.textContent='Reading screenshot...';
-  try{
-    const file=input.files[0];
-    const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=()=>rej(new Error('Read failed'));r.readAsDataURL(file);});
-    const mediaType=file.type||'image/png';
-    const resp=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_API_KEY},
-      body:JSON.stringify({
-        model:'qwen/qwen3.6-27b',
-        max_tokens:1000,
-        messages:[{role:'user',content:[
-          {type:'image_url',image_url:{url:'data:'+mediaType+';base64,'+base64}},
-          {type:'text',text:'Extract race results from this image. Return ONLY lines in this exact format, nothing else:\nDriverName, position, points\n\nposition is their finishing position (1,2,3...). points is their championship points scored. If you cannot see points, use this points system: '+getPointsArray().map((p,i)=>'P'+(i+1)+'='+p).join(', ')+'. One driver per line. No headers, no extra text, no time.'}
-        ]}]
-      })
-    });
-    if(!resp.ok){const e=await resp.text();throw new Error('API '+resp.status+': '+e);}
-    const json=await resp.json();
-    let text=(json.choices||[])[0]?.message?.content?.trim()||'';
-    // Strip <think>...</think> blocks and any preamble
-    text=text.replace(/<think>[\s\S]*?<\/think>/gi,'').trim();
-    // Only keep lines matching "something, number, number" format
-    text=text.split('\n').filter(line=>{const p=line.split(',');return p.length>=3&&p[0].trim()&&!isNaN(parseInt(p[1]));}).join('\n');
-    if(text){
-      textarea.value=text;
-      status.innerHTML='<span style="color:#4CAF50;">✓ Results extracted — review and hit Save</span>';
-    }else{
-      status.textContent='No results found in image.';
-    }
-  }catch(e){
-    status.textContent='Error: '+e.message;
-    toast('Scan failed: '+e.message,false);
+/* ---------- RESULTS BUILDER ---------- */
+function driverOptions(selected){
+  const opts=data.drivers.map(d=>'<option value="'+esc(d.name)+'"'+(d.name===selected?' selected':'')+'>'+d.name+'</option>').join('');
+  return '<option value="">Pick driver...</option>'+opts;
+}
+function ptsForPos(pos){
+  const arr=getPointsArray();
+  return arr[pos-1]||0;
+}
+function buildResultRows(raceId, results){
+  if(!results||!results.length) return '';
+  return results.map((res,i)=>`
+    <div class="rb-row" data-i="${i}">
+      <select class="rb-driver" onchange="rbDriverChange(this)">${driverOptions(res.driver)}</select>
+      <input class="rb-pos" type="number" min="1" placeholder="Pos" value="${res.pos||''}" oninput="rbPosChange(this)" style="width:70px;">
+      <input class="rb-pts" type="number" min="0" placeholder="Pts" value="${res.pts||0}" style="width:70px;">
+      <button class="del" style="padding:5px 10px;" onclick="this.parentElement.remove()">✕</button>
+    </div>`).join('');
+}
+function addResultRow(raceId){
+  const container=document.getElementById('rb_rows_'+raceId);
+  if(!container)return;
+  const div=document.createElement('div');
+  div.className='rb-row';
+  div.innerHTML=`
+    <select class="rb-driver" onchange="rbDriverChange(this)">${driverOptions('')}</select>
+    <input class="rb-pos" type="number" min="1" placeholder="Pos" oninput="rbPosChange(this)" style="width:70px;">
+    <input class="rb-pts" type="number" min="0" placeholder="Pts" value="0" style="width:70px;">
+    <button class="del" style="padding:5px 10px;" onclick="this.parentElement.remove()">✕</button>`;
+  container.appendChild(div);
+  div.querySelector('.rb-driver').focus();
+}
+function rbDriverChange(sel){
+  // auto-focus position field
+  const row=sel.closest('.rb-row');
+  if(row) row.querySelector('.rb-pos').focus();
+}
+function rbPosChange(inp){
+  const pos=parseInt(inp.value)||0;
+  const row=inp.closest('.rb-row');
+  if(row&&pos>0){
+    const ptsInput=row.querySelector('.rb-pts');
+    ptsInput.value=ptsForPos(pos);
   }
-  input.value='';
+}
+function readResultRows(raceId){
+  const container=document.getElementById('rb_rows_'+raceId);
+  if(!container)return[];
+  const rows=container.querySelectorAll('.rb-row');
+  const results=[];
+  rows.forEach(row=>{
+    const driver=row.querySelector('.rb-driver').value.trim();
+    const pos=parseInt(row.querySelector('.rb-pos').value)||0;
+    const pts=parseInt(row.querySelector('.rb-pts').value)||0;
+    if(driver&&pos>0) results.push({driver,pos,pts});
+  });
+  return results.sort((a,b)=>a.pos-b.pos);
 }
 
 function renderSeasons(){
@@ -493,11 +513,10 @@ function renderRaces(){
         +'<div class="row"><select id="e_rformat_'+r.id+'">'+fmts.map(f=>'<option value="'+f+'"'+(r.format===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'
         +'<input id="e_rlaps_'+r.id+'" type="number" value="'+(r.laps||0)+'"/></div>'
         +'<select id="e_rstatus_'+r.id+'"><option value="upcoming"'+(r.status==='upcoming'?' selected':'')+'>Upcoming</option><option value="completed"'+(r.status==='completed'?' selected':'')+'>Completed</option></select>'
-        +'<label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:3px;">Results — one per line: Driver, position, points, time (time optional)</label>'
-        +'<textarea id="e_rresults_'+r.id+'" placeholder="Alex Racer, 1, 25, 1:23:06&#10;Jordan Swift, 2, 18">'+resultsToText(r.results)+'</textarea>'
-        +'<input type="file" id="e_rscan_'+r.id+'" accept="image/*" style="display:none;" onchange="scanResults(\''+r.id+'\')">'
-        +'<button class="edit" style="width:100%;margin-top:6px;text-align:center;padding:10px;" onclick="document.getElementById(\'e_rscan_'+r.id+'\').click()">📷 Scan results from screenshot</button>'
-        +'<div id="e_rscanstatus_'+r.id+'" style="font-size:.8rem;color:var(--muted);margin-top:6px;"></div>'
+        +'<div class="results-builder" id="rb_'+r.id+'">'
+        +'<div class="rb-head"><span style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Race Results</span><button class="edit" style="padding:5px 10px;font-size:.75rem;" onclick="addResultRow(\''+r.id+'\')">+ Add Driver</button></div>'
+        +'<div id="rb_rows_'+r.id+'" class="rb-rows">'+buildResultRows(r.id, r.results)+'</div>'
+        +'</div>'
         +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveRaceEdit(\''+r.id+'\')">Save</button>'
         +'<button class="cancel" onclick="editingId=null;renderRaces()">Cancel</button></div></div></div>';
     }
