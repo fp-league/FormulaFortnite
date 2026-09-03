@@ -136,21 +136,25 @@ function closeModal() { document.getElementById('modal').classList.add('hidden')
 async function loadData() {
     if (!JSON_CONFIGURED) { loadSampleData(); afterLoad(); return; }
     try {
-        const res = await fetch("https://api.jsonbin.io/v3/b/" + BIN_ID + "/latest", { headers: { "X-Access-Key": ACCESS_KEY } });
+        const res = await fetch("https://api.jsonbin.io/v3/b/" + BIN_ID + "/latest", {
+            headers: { "X-Access-Key": ACCESS_KEY }
+        });
         if (!res.ok) throw new Error("HTTP " + res.status);
         const json = await res.json();
-        const record = json.record || {};
-        drivers.push(...(record.drivers || []));
-        teams.push(...(record.teams || []));
-        races.push(...(record.races || []));
-        news.push(...(record.news || []));
-        archive = record.archive || {};
-        seasonName = record.seasonName || '2026';
-        standings = [...drivers].sort((a, b) => (b.points || 0) - (a.points || 0));
+        const r = json.record || {};
+        // Safe push — handle missing/malformed arrays gracefully
+        if (Array.isArray(r.drivers)) drivers.push(...r.drivers);
+        if (Array.isArray(r.teams))   teams.push(...r.teams);
+        if (Array.isArray(r.races))   races.push(...r.races);
+        if (Array.isArray(r.news))    news.push(...r.news);
+        archive    = (r.archive && typeof r.archive === 'object') ? r.archive : {};
+        seasonName = r.seasonName || '2026';
+        standings  = [...drivers].sort((a, b) => (b.points || 0) - (a.points || 0));
         afterLoad();
     } catch (error) {
-        console.error('Error loading data:', error);
-        loadSampleData(); afterLoad();
+        console.warn('JSONBin load failed, using sample data:', error.message);
+        loadSampleData();
+        afterLoad();
     }
 }
 function afterLoad() { populateSeasons(); renderHome(); }
@@ -473,14 +477,71 @@ function renderCalendar() {
 function openRaceModal(race) {
     if (!race) return;
     const date = race.date ? new Date(race.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Date TBC';
-    let body = `<div class="modal-race-head"><div class="modal-race-num">${race.name}</div><p class="event-track">${race.track || ''}</p><p style="color:var(--f1-muted);">${date} &middot; ${race.format || ''} &middot; ${race.laps || 0} laps</p></div>`;
-    if (race.results && race.results.length) {
-        const rows = [...race.results].sort((a, b) => (a.pos || 99) - (b.pos || 99)).map(r => `<tr><td class="pos">${r.pos}</td><td class="driver">${r.driver}</td><td class="points">${r.pts || 0}</td></tr>`).join('');
-        body += `<table class="standings-table" style="margin-top:1rem;"><thead><tr><th class="pos">POS</th><th class="driver">DRIVER</th><th class="points">PTS</th></tr></thead><tbody>${rows}</tbody></table>`;
-    } else {
-        body += `<p style="margin-top:1rem;color:var(--f1-muted);">No results yet — check back after the race.</p>`;
+    const hasResults = race.results && race.results.length;
+    const hasQual = race.qualifying && race.qualifying.length;
+
+    let body = `<div class="modal-race-head">
+        <div class="modal-race-num">${race.name}</div>
+        <p class="event-track">${race.track || ''}</p>
+        <p style="color:var(--f1-muted);">${date} &middot; ${race.format || ''} &middot; ${race.laps || 0} laps</p>
+    </div>`;
+
+    // Tabs if qualifying exists
+    if (hasQual) {
+        body += `<div class="modal-tabs" style="display:flex;gap:8px;margin:1rem 0;">
+            <button class="tab-btn active" id="mTab-race" onclick="switchModalTab('race','${race.id||'r'}')">RACE</button>
+            <button class="tab-btn" id="mTab-qual" onclick="switchModalTab('qual','${race.id||'r'}')">QUALIFYING</button>
+        </div>`;
     }
+
+    // Race results
+    if (hasResults) {
+        const sorted = [...race.results].sort((a, b) => {
+            if (a.dnf && !b.dnf) return 1;
+            if (!a.dnf && b.dnf) return -1;
+            return (a.pos || 99) - (b.pos || 99);
+        });
+        const rows = sorted.map(r => `<tr>
+            <td class="pos">${r.dnf ? '<span style="color:var(--f1-muted);">DNF</span>' : r.pos}</td>
+            <td class="driver">${r.driver}${r.dnf ? ' <span style="color:var(--f1-muted);font-size:0.75rem;">(DNF)</span>' : ''}</td>
+            <td class="points">${r.dnf ? '—' : r.pts || 0}</td>
+        </tr>`).join('');
+        body += `<div id="mPanel-race-${race.id||'r'}">
+            <table class="standings-table" style="margin-top:0.5rem;">
+                <thead><tr><th class="pos">POS</th><th class="driver">DRIVER</th><th class="points">PTS</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            ${race.fastestLap ? `<p style="margin-top:1rem;font-size:0.85rem;color:var(--f1-muted);">⚡ Fastest Lap: <strong style="color:var(--f1-white);">${race.fastestLap}</strong></p>` : ''}
+        </div>`;
+    } else {
+        body += `<div id="mPanel-race-${race.id||'r'}"><p style="margin-top:1rem;color:var(--f1-muted);">No results yet — check back after the race.</p></div>`;
+    }
+
+    // Qualifying results
+    if (hasQual) {
+        const qrows = [...race.qualifying].sort((a, b) => (a.pos || 99) - (b.pos || 99)).map(q => `<tr>
+            <td class="pos">${q.pos}</td>
+            <td class="driver">${q.driver}</td>
+            <td class="points">${q.laptime || '—'}</td>
+        </tr>`).join('');
+        body += `<div id="mPanel-qual-${race.id||'r'}" style="display:none;">
+            <table class="standings-table" style="margin-top:0.5rem;">
+                <thead><tr><th class="pos">POS</th><th class="driver">DRIVER</th><th class="points">TIME</th></tr></thead>
+                <tbody>${qrows}</tbody>
+            </table>
+        </div>`;
+    }
+
     openModal(body);
+}
+
+function switchModalTab(tab, raceId) {
+    ['race', 'qual'].forEach(t => {
+        const panel = document.getElementById('mPanel-' + t + '-' + raceId);
+        const btn = document.getElementById('mTab-' + t);
+        if (panel) panel.style.display = t === tab ? 'block' : 'none';
+        if (btn) btn.classList.toggle('active', t === tab);
+    });
 }
 
 // ==================== RESULTS PAGE ====================
@@ -498,12 +559,18 @@ function renderResults() {
         document.getElementById('resultsTitle').textContent = seasonLabel + ' RACE RESULTS';
         if (!completed.length) { panel.innerHTML = '<p style="padding:1.5rem;color:var(--f1-muted);">No race results yet.</p>'; return; }
         const rows = completed.map((r, i) => {
-            const win = [...r.results].sort((a, b) => (a.pos || 99) - (b.pos || 99))[0] || {};
+            const sorted = [...r.results].sort((a, b) => {
+                if (a.dnf && !b.dnf) return 1;
+                if (!a.dnf && b.dnf) return -1;
+                return (a.pos || 99) - (b.pos || 99);
+            });
+            const win = sorted.find(x => !x.dnf) || sorted[0] || {};
             const team = teamOfDriver(win.driver, data.drivers);
             const c = colourFor(team, data.teams);
             const date = r.date ? new Date(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+            const dnfCount = r.results.filter(x => x.dnf).length;
             return `<tr data-i="${i}" style="cursor:pointer;">
-                <td class="rt-gp">${r.name}</td>
+                <td class="rt-gp">${r.name}${dnfCount ? ` <span style="color:var(--f1-muted);font-size:0.78rem;">(${dnfCount} DNF)</span>` : ''}</td>
                 <td class="rt-date">${date}</td>
                 <td class="rt-winner">${win.driver || '-'}</td>
                 <td class="rt-team">${dot(c)}${team || '-'}</td>

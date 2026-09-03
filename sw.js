@@ -1,47 +1,29 @@
-const CACHE_NAME = 'formula-fortnite-v21';
-const urlsToCache = [
-    './',
-    './index.html',
-    './styles.css',
-    './app.js',
-    './manage.html',
-    './manifest.json'
-];
+// v24 — network first, no cache blocking
+const CACHE = 'ff-v24';
 
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-    );
+self.addEventListener('install', e => {
     self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(names =>
-            Promise.all(names.map(name => { if (name !== CACHE_NAME) return caches.delete(name); }))
+self.addEventListener('activate', e => {
+    e.waitUntil(
+        caches.keys().then(keys =>
+            Promise.all(keys.map(k => caches.delete(k)))
         )
     );
     self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
-    const req = event.request;
-    if (req.method !== 'GET') return;
-
-    // Live database: always fresh, fall back to cache offline
-    if (req.url.includes('api.jsonbin.io')) {
-        event.respondWith(fetch(req).catch(() => caches.match(req)));
-        return;
-    }
-
-    // App files: NETWORK FIRST — always try the latest, cache as backup.
-    event.respondWith(
-        fetch(req)
-            .then(resp => {
-                const copy = resp.clone();
-                caches.open(CACHE_NAME).then(cache => cache.put(req, copy)).catch(() => {});
-                return resp;
+self.addEventListener('fetch', e => {
+    if (e.request.method !== 'GET') return;
+    // Always go network first
+    e.respondWith(
+        fetch(e.request)
+            .then(r => {
+                const clone = r.clone();
+                caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
+                return r;
             })
-            .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
+            .catch(() => caches.match(e.request))
     );
 });

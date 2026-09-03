@@ -184,7 +184,10 @@
         <button class="add" onclick="archiveSeason()">ARCHIVE CURRENT SEASON</button>
       </div>
       <div class="card">
-        <h2>Start Fresh (optional)</h2>
+        <h2>Initialise Bin</h2>
+        <p class="sub" style="margin-bottom:10px;">First time setup — writes the correct empty structure to your JSONBin. Safe to run on an empty or broken bin. Won't delete existing data if bin already has drivers/teams.</p>
+        <button class="add" style="background:#333;" onclick="initialiseBin()">INITIALISE BIN</button>
+      </div>
         <p class="sub" style="margin-bottom:10px;">Archive first! These reset the live season.</p>
         <button class="add" style="background:#8a5a00;margin-bottom:10px;" onclick="resetPoints()">RESET ALL DRIVER STATS TO 0</button>
         <button class="add" style="background:#8a0000;" onclick="clearRaces()">CLEAR ALL RACES</button>
@@ -374,16 +377,34 @@ async function addRace(){
 }
 async function saveRaceEdit(id){
   const r=data.races.find(x=>x.id===id); if(!r)return;
-  r.name=document.getElementById('e_rname_'+id).value.trim(); r.track=document.getElementById('e_rtrack_'+id).value.trim();
-  r.date=document.getElementById('e_rdate_'+id).value; r.format=document.getElementById('e_rformat_'+id).value;
+  r.name=document.getElementById('e_rname_'+id).value.trim();
+  r.track=document.getElementById('e_rtrack_'+id).value.trim();
+  r.date=document.getElementById('e_rdate_'+id).value;
   r.image=document.getElementById('e_rimage_'+id).value.trim();
-  r.laps=parseInt(document.getElementById('e_rlaps_'+id).value)||0; r.status=document.getElementById('e_rstatus_'+id).value;
+  r.format=document.getElementById('e_rformat_'+id).value;
+  r.laps=parseInt(document.getElementById('e_rlaps_'+id).value)||0;
+  r.status=document.getElementById('e_rstatus_'+id).value;
+  r.fastestLap=document.getElementById('e_rflap_'+id).value.trim();
   r.results=readResultRows(id);
+  r.qualifying=readQualRows(id);
   try{ await save(); editingId=null; toast('Saved'); renderRaces(); }catch(e){ toast('Error: '+e.message,false); }
 }
 
 /* ---------- SEASONS ---------- */
 function saveSeasonName(){ (async()=>{ data.seasonName=val('seasonName').trim()||data.seasonName; try{ await save(); toast('Season name saved'); }catch(e){ toast('Error: '+e.message,false); } })(); }
+async function initialiseBin(){
+  if(!confirm('This will write a clean starter structure to your bin. If the bin already has data, that data will be kept. Continue?'))return;
+  // Merge — only set fields that are missing
+  if(!data.seasonName) data.seasonName='2026';
+  if(!data.pointsSystem) data.pointsSystem='25,18,15,12,10,8,6,4,2,1';
+  if(!Array.isArray(data.drivers)) data.drivers=[];
+  if(!Array.isArray(data.teams)) data.teams=[];
+  if(!Array.isArray(data.races)) data.races=[];
+  if(!Array.isArray(data.news)) data.news=[];
+  if(!data.archive) data.archive={};
+  try{ await save(); toast('Bin initialised ✓'); renderSeasons(); }
+  catch(e){ toast('Error: '+e.message,false); }
+}
 function getPointsArray(){ return (data.pointsSystem||'25,18,15,12,10,8,6,4,2,1').split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)); }
 function updatePointsPreview(){
   const pts=getPointsArray();
@@ -427,15 +448,21 @@ function ptsForPos(pos){
   const arr=getPointsArray();
   return arr[pos-1]||0;
 }
+function buildResultRow(res, i, raceId){
+  const isDnf=res.dnf?'checked':'';
+  const posDisabled=res.dnf?'disabled':'';
+  const ptsDisabled=res.dnf?'disabled':'';
+  return `<div class="rb-row" data-i="${i}">
+    <select class="rb-driver" onchange="rbDriverChange(this)">${driverOptions(res.driver)}</select>
+    <input class="rb-pos" type="number" min="1" placeholder="Pos" value="${res.dnf?'':res.pos||''}" oninput="rbPosChange(this)" style="width:60px;" ${posDisabled}>
+    <input class="rb-pts" type="number" min="0" placeholder="Pts" value="${res.dnf?0:res.pts||0}" style="width:60px;" ${ptsDisabled}>
+    <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;color:var(--muted);white-space:nowrap;"><input type="checkbox" class="rb-dnf" onchange="rbDnfChange(this)" ${isDnf}> DNF</label>
+    <button class="del" style="padding:5px 10px;" onclick="this.parentElement.remove()">✕</button>
+  </div>`;
+}
 function buildResultRows(raceId, results){
   if(!results||!results.length) return '';
-  return results.map((res,i)=>`
-    <div class="rb-row" data-i="${i}">
-      <select class="rb-driver" onchange="rbDriverChange(this)">${driverOptions(res.driver)}</select>
-      <input class="rb-pos" type="number" min="1" placeholder="Pos" value="${res.pos||''}" oninput="rbPosChange(this)" style="width:70px;">
-      <input class="rb-pts" type="number" min="0" placeholder="Pts" value="${res.pts||0}" style="width:70px;">
-      <button class="del" style="padding:5px 10px;" onclick="this.parentElement.remove()">✕</button>
-    </div>`).join('');
+  return results.map((res,i)=>buildResultRow(res,i,raceId)).join('');
 }
 function addResultRow(raceId){
   const container=document.getElementById('rb_rows_'+raceId);
@@ -444,14 +471,14 @@ function addResultRow(raceId){
   div.className='rb-row';
   div.innerHTML=`
     <select class="rb-driver" onchange="rbDriverChange(this)">${driverOptions('')}</select>
-    <input class="rb-pos" type="number" min="1" placeholder="Pos" oninput="rbPosChange(this)" style="width:70px;">
-    <input class="rb-pts" type="number" min="0" placeholder="Pts" value="0" style="width:70px;">
+    <input class="rb-pos" type="number" min="1" placeholder="Pos" oninput="rbPosChange(this)" style="width:60px;">
+    <input class="rb-pts" type="number" min="0" placeholder="Pts" value="0" style="width:60px;">
+    <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;color:var(--muted);white-space:nowrap;"><input type="checkbox" class="rb-dnf" onchange="rbDnfChange(this)"> DNF</label>
     <button class="del" style="padding:5px 10px;" onclick="this.parentElement.remove()">✕</button>`;
   container.appendChild(div);
   div.querySelector('.rb-driver').focus();
 }
 function rbDriverChange(sel){
-  // auto-focus position field
   const row=sel.closest('.rb-row');
   if(row) row.querySelector('.rb-pos').focus();
 }
@@ -460,7 +487,20 @@ function rbPosChange(inp){
   const row=inp.closest('.rb-row');
   if(row&&pos>0){
     const ptsInput=row.querySelector('.rb-pts');
-    ptsInput.value=ptsForPos(pos);
+    if(!ptsInput.disabled) ptsInput.value=ptsForPos(pos);
+  }
+}
+function rbDnfChange(cb){
+  const row=cb.closest('.rb-row');
+  if(!row)return;
+  const posInp=row.querySelector('.rb-pos');
+  const ptsInp=row.querySelector('.rb-pts');
+  if(cb.checked){
+    posInp.value=''; posInp.disabled=true;
+    ptsInp.value=0;  ptsInp.disabled=true;
+  } else {
+    posInp.disabled=false;
+    ptsInp.disabled=false;
   }
 }
 function readResultRows(raceId){
@@ -470,11 +510,59 @@ function readResultRows(raceId){
   const results=[];
   rows.forEach(row=>{
     const driver=row.querySelector('.rb-driver').value.trim();
-    const pos=parseInt(row.querySelector('.rb-pos').value)||0;
-    const pts=parseInt(row.querySelector('.rb-pts').value)||0;
-    if(driver&&pos>0) results.push({driver,pos,pts});
+    if(!driver)return;
+    const dnf=row.querySelector('.rb-dnf').checked;
+    const pos=dnf?0:parseInt(row.querySelector('.rb-pos').value)||0;
+    const pts=dnf?0:parseInt(row.querySelector('.rb-pts').value)||0;
+    if(driver) results.push({driver,pos,pts,dnf:dnf||false});
   });
-  return results.sort((a,b)=>a.pos-b.pos);
+  return results.sort((a,b)=>{
+    if(a.dnf&&!b.dnf)return 1;
+    if(!a.dnf&&b.dnf)return -1;
+    return(a.pos||99)-(b.pos||99);
+  });
+}
+
+/* ---------- QUALIFYING BUILDER ---------- */
+function buildQualRows(raceId, qualifying){
+  if(!qualifying||!qualifying.length) return '';
+  return qualifying.map((q,i)=>`
+    <div class="qb-row rb-row" data-i="${i}">
+      <select class="qb-driver" onchange="qbDriverChange(this)">${driverOptions(q.driver)}</select>
+      <input class="qb-pos" type="number" min="1" placeholder="Grid pos" value="${q.pos||''}" style="width:80px;">
+      <input class="qb-time" type="text" placeholder="Lap time (opt)" value="${q.laptime||''}" style="width:100px;">
+      <button class="del" style="padding:5px 10px;" onclick="this.parentElement.remove()">✕</button>
+    </div>`).join('');
+}
+function addQualRow(raceId){
+  const container=document.getElementById('qb_rows_'+raceId);
+  if(!container)return;
+  const div=document.createElement('div');
+  div.className='qb-row rb-row';
+  div.innerHTML=`
+    <select class="qb-driver" onchange="qbDriverChange(this)">${driverOptions('')}</select>
+    <input class="qb-pos" type="number" min="1" placeholder="Grid pos" style="width:80px;">
+    <input class="qb-time" type="text" placeholder="Lap time (opt)" style="width:100px;">
+    <button class="del" style="padding:5px 10px;" onclick="this.parentElement.remove()">✕</button>`;
+  container.appendChild(div);
+  div.querySelector('.qb-driver').focus();
+}
+function qbDriverChange(sel){
+  const row=sel.closest('.qb-row');
+  if(row) row.querySelector('.qb-pos').focus();
+}
+function readQualRows(raceId){
+  const container=document.getElementById('qb_rows_'+raceId);
+  if(!container)return[];
+  const rows=container.querySelectorAll('.qb-row');
+  const qual=[];
+  rows.forEach(row=>{
+    const driver=row.querySelector('.qb-driver').value.trim();
+    const pos=parseInt(row.querySelector('.qb-pos').value)||0;
+    const laptime=row.querySelector('.qb-time').value.trim();
+    if(driver&&pos>0) qual.push({driver,pos,laptime});
+  });
+  return qual.sort((a,b)=>a.pos-b.pos);
 }
 
 function renderSeasons(){
@@ -513,9 +601,14 @@ function renderRaces(){
         +'<div class="row"><select id="e_rformat_'+r.id+'">'+fmts.map(f=>'<option value="'+f+'"'+(r.format===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'
         +'<input id="e_rlaps_'+r.id+'" type="number" value="'+(r.laps||0)+'"/></div>'
         +'<select id="e_rstatus_'+r.id+'"><option value="upcoming"'+(r.status==='upcoming'?' selected':'')+'>Upcoming</option><option value="completed"'+(r.status==='completed'?' selected':'')+'>Completed</option></select>'
+        +'<input id="e_rflap_'+r.id+'" value="'+esc(r.fastestLap||'')+'" placeholder="Fastest lap driver (optional)"/>'
         +'<div class="results-builder" id="rb_'+r.id+'">'
-        +'<div class="rb-head"><span style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Race Results</span><button class="edit" style="padding:5px 10px;font-size:.75rem;" onclick="addResultRow(\''+r.id+'\')">+ Add Driver</button></div>'
+        +'<div class="rb-head"><span style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">🏁 Race Results</span><button class="edit" style="padding:5px 10px;font-size:.75rem;" onclick="addResultRow(\''+r.id+'\')">+ Add Driver</button></div>'
         +'<div id="rb_rows_'+r.id+'" class="rb-rows">'+buildResultRows(r.id, r.results)+'</div>'
+        +'</div>'
+        +'<div class="results-builder" id="qb_'+r.id+'" style="margin-top:10px;">'
+        +'<div class="rb-head"><span style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">⏱ Qualifying (optional)</span><button class="edit" style="padding:5px 10px;font-size:.75rem;" onclick="addQualRow(\''+r.id+'\')">+ Add Driver</button></div>'
+        +'<div id="qb_rows_'+r.id+'" class="rb-rows">'+buildQualRows(r.id, r.qualifying)+'</div>'
         +'</div>'
         +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveRaceEdit(\''+r.id+'\')">Save</button>'
         +'<button class="cancel" onclick="editingId=null;renderRaces()">Cancel</button></div></div></div>';
