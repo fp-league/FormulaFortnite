@@ -22,6 +22,7 @@
                 <li><a href="#" class="nav-link" data-page="calendar">CALENDAR</a></li>
                 <li><a href="#" class="nav-link" data-page="teams">TEAMS</a></li>
                 <li><a href="#" class="nav-link" data-page="drivers">DRIVERS</a></li>
+                <li><a href="#" class="nav-link" data-page="fantasy">FANTASY</a></li>
                 <li><a href="manage.html" class="nav-link">ADMIN</a></li>
             </ul>
             <div class="nav-toggle"><span></span><span></span><span></span></div>
@@ -37,6 +38,18 @@
         <!-- HOME -->
         <section id="home" class="page active">
             <div class="race-strip" id="raceStrip"></div>
+            <div class="countdown-bar" id="countdownBar" style="display:none;">
+                <span class="cb-label">NEXT RACE IN</span>
+                <div class="cb-units">
+                    <div class="cb-unit"><span id="cdDays">00</span><label>DAYS</label></div>
+                    <div class="cb-sep">:</div>
+                    <div class="cb-unit"><span id="cdHours">00</span><label>HRS</label></div>
+                    <div class="cb-sep">:</div>
+                    <div class="cb-unit"><span id="cdMins">00</span><label>MIN</label></div>
+                    <div class="cb-sep">:</div>
+                    <div class="cb-unit"><span id="cdSecs">00</span><label>SEC</label></div>
+                </div>
+            </div>
 
             <section class="home-news">
                 <div class="news-hero" id="newsHero"></div>
@@ -129,6 +142,55 @@
                 <span class="hof-btn" data-page="standings">View past seasons &rarr;</span>
             </div>
         </section>
+        <!-- FANTASY -->
+        <section id="fantasy" class="page">
+            <h1 class="cal-title">FF FANTASY</h1>
+            <p class="drivers-sub">Pick your team. Score points from real race results.</p>
+
+            <!-- Join / My Team -->
+            <div id="fantasyJoin" class="fantasy-join hidden">
+                <div class="fj-card">
+                    <h2>JOIN FANTASY</h2>
+                    <p>Enter a username to create your team. You'll use this to manage your picks.</p>
+                    <input type="text" id="fjUsername" placeholder="Your username" maxlength="24" />
+                    <button class="btn btn-primary" onclick="fantasyJoin()" style="width:100%;margin-top:0;">JOIN</button>
+                </div>
+            </div>
+
+            <!-- My Team -->
+            <div id="fantasyMyTeam" class="hidden">
+                <div class="fantasy-header">
+                    <div>
+                        <h2 id="fantasyWelcome">MY TEAM</h2>
+                        <p class="drivers-sub" id="fantasySubtitle" style="margin:0;"></p>
+                    </div>
+                    <button class="tab-btn" onclick="fantasyLogout()">CHANGE USER</button>
+                </div>
+                <div class="fantasy-team-picker" id="fantasyPicker">
+                    <div class="ftp-section">
+                        <h3>DRIVERS <span id="driverPickCount">(0/3)</span></h3>
+                        <p class="ftp-hint">Pick 3 drivers</p>
+                        <div class="ftp-grid" id="driverPickGrid"></div>
+                    </div>
+                    <div class="ftp-section">
+                        <h3>CONSTRUCTOR</h3>
+                        <p class="ftp-hint">Pick 1 team</p>
+                        <div class="ftp-grid" id="constructorPickGrid"></div>
+                    </div>
+                    <button class="btn btn-primary" id="fantasySubmitBtn" onclick="fantasySubmit()" style="margin-top:1rem;">SAVE TEAM</button>
+                </div>
+                <div class="fantasy-my-picks" id="fantasyMyPicks" style="margin-top:2rem;"></div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="fantasy-leaderboard" style="margin-top:2.5rem;">
+                <h2>LEADERBOARD</h2>
+                <div class="results-panel" id="fantasyLeaderboard">
+                    <p style="padding:1.5rem;color:var(--f1-muted);">No teams yet. Be the first to join!</p>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <div id="modal" class="modal hidden">

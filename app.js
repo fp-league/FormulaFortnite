@@ -10,6 +10,7 @@ const teams = [];
 const races = [];
 const news = [];
 let archive = {};
+let fantasyTeams = [];
 let seasonName = '2026';
 let standings = [];
 let selectedSeason = 'live';
@@ -71,7 +72,7 @@ function navigateTo(page) {
         else if (page === 'results') renderResults();
         else if (page === 'calendar') renderCalendar();
         else if (page === 'teams') renderTeams();
-        else if (page === 'drivers') renderDrivers();
+        else if (page === 'fantasy') renderFantasy();
         window.scrollTo(0, 0);
     }
 }
@@ -80,7 +81,19 @@ function navigateTo(page) {
 function setupEventListeners() {
     const navToggle = document.querySelector('.nav-toggle');
     const navMenu = document.querySelector('.nav-menu');
-    if (navToggle) navToggle.addEventListener('click', () => { navMenu.style.display = navMenu.style.display === 'flex' ? 'none' : 'flex'; });
+    if (navToggle) {
+        navToggle.addEventListener('click', () => {
+            navMenu.classList.toggle('open');
+            navToggle.classList.toggle('open');
+        });
+    }
+    // Close menu when a nav link is tapped
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            navMenu.classList.remove('open');
+            navToggle.classList.remove('open');
+        });
+    });
 
     // Standings page tabs
     document.querySelectorAll('#standings .tab-btn').forEach(btn => {
@@ -147,6 +160,7 @@ async function loadData() {
         if (Array.isArray(r.teams))   teams.push(...r.teams);
         if (Array.isArray(r.races))   races.push(...r.races);
         if (Array.isArray(r.news))    news.push(...r.news);
+        if (Array.isArray(r.fantasy)) fantasyTeams.push(...r.fantasy);
         archive    = (r.archive && typeof r.archive === 'object') ? r.archive : {};
         seasonName = r.seasonName || '2026';
         standings  = [...drivers].sort((a, b) => (b.points || 0) - (a.points || 0));
@@ -234,6 +248,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB', { day: 
 // ==================== HOME ====================
 function renderHome() {
     renderRaceStrip();
+    startCountdown();
     renderHomeNews();
     renderHomeSeason();
 }
@@ -254,6 +269,30 @@ function renderRaceStrip() {
         <span class="rs-status ${next.status === 'upcoming' ? 'up' : ''}">${(next.status || '').toUpperCase()}</span>`;
 }
 
+let countdownInterval = null;
+function startCountdown() {
+    const bar = document.getElementById('countdownBar');
+    if (!bar) return;
+    const next = [...races].sort((a,b) => new Date(a.date||0)-new Date(b.date||0)).find(r => r.status === 'upcoming');
+    if (!next || !next.date) { bar.style.display = 'none'; return; }
+    const target = new Date(next.date).getTime();
+    if (countdownInterval) clearInterval(countdownInterval);
+    function tick() {
+        const diff = target - Date.now();
+        if (diff <= 0) { bar.style.display = 'none'; clearInterval(countdownInterval); return; }
+        bar.style.display = 'flex';
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('cdDays').textContent  = String(d).padStart(2,'0');
+        document.getElementById('cdHours').textContent = String(h).padStart(2,'0');
+        document.getElementById('cdMins').textContent  = String(m).padStart(2,'0');
+        document.getElementById('cdSecs').textContent  = String(s).padStart(2,'0');
+    }
+    tick();
+    countdownInterval = setInterval(tick, 1000);
+}
 function newsHeroHTML(n) {
     const bg = n.image ? `<div class="nh-bg" style="background-image:url('${n.image}')"></div>` : `<div class="nh-bg nh-placeholder"></div>`;
     return `${bg}<div class="nh-overlay"></div><div class="nh-content"><span class="nh-tag">LATEST</span><h2>${n.title || ''}</h2><p>${(n.body || '').slice(0, 130)}${(n.body || '').length > 130 ? '…' : ''}</p></div>`;
@@ -345,17 +384,36 @@ function renderStandingsView() {
     } else {
         title.textContent = seasonLabel + " DRIVERS' STANDINGS";
         const sorted = [...data.drivers].sort((a, b) => (b.points || 0) - (a.points || 0));
+        const leader = sorted[0] ? (sorted[0].points || 0) : 0;
         if (!sorted.length) { panel.innerHTML = '<p style="padding:1.5rem;color:var(--f1-muted);">No drivers yet.</p>'; }
         else {
-            panel.innerHTML = `<table class="results-table std-table"><thead><tr><th>POS</th><th>DRIVER</th><th>NAT</th><th>TEAM</th><th>PTS</th></tr></thead><tbody>` +
-                sorted.map((d, i) => `<tr data-i="${i}" style="cursor:pointer;">
-                    <td class="rt-pos">${i + 1}</td>
-                    <td class="std-driver">${driverAvatar(d, 'std-avatar')}<span>${d.name}</span></td>
-                    <td class="std-nat">${d.nationality || '—'}</td>
-                    <td class="rt-team">${dot(colourFor(d.team, data.teams))}${d.team}</td>
-                    <td class="rt-time">${d.points || 0}</td>
-                </tr>`).join('') + `</tbody></table>`;
-            panel.querySelectorAll('tbody tr').forEach(tr => tr.addEventListener('click', () => openDriverModal(sorted[parseInt(tr.dataset.i)])));
+            // Build form guide per driver from races
+            const formMap = {};
+            if (data.races) {
+                [...data.races].sort((a,b)=>new Date(a.date||0)-new Date(b.date||0)).forEach(r => {
+                    (r.results||[]).forEach(res => {
+                        if (!formMap[res.driver]) formMap[res.driver] = [];
+                        formMap[res.driver].push(res.dnf ? 'D' : res.pos === 1 ? 'W' : res.pos <= 3 ? 'P' : 'F');
+                    });
+                });
+            }
+            panel.innerHTML = `<table class="results-table std-table"><thead><tr>
+                <th>POS</th><th>DRIVER</th><th>NAT</th><th>TEAM</th><th>FORM</th><th>GAP</th><th>PTS</th>
+            </tr></thead><tbody>` +
+                sorted.map((d, i) => {
+                    const gap = i === 0 ? '<span class="pts-leader">LEADER</span>' : `<span class="pts-gap">-${leader - (d.points||0)}</span>`;
+                    const form = (formMap[d.name] || []).slice(-5).map(f=>`<div class="fg-dot ${f}">${f==='D'?'—':f}</div>`).join('');
+                    return `<tr data-i="${i}" style="cursor:pointer;">
+                        <td class="rt-pos">${i + 1}</td>
+                        <td class="std-driver">${driverAvatar(d,'std-avatar')}<span>${d.name}</span></td>
+                        <td class="std-nat">${d.nationality || '—'}</td>
+                        <td class="rt-team">${dot(colourFor(d.team, data.teams))}${d.team}</td>
+                        <td><div class="form-guide">${form || '—'}</div></td>
+                        <td>${gap}</td>
+                        <td class="rt-time">${d.points || 0}</td>
+                    </tr>`;
+                }).join('') + `</tbody></table>`;
+            panel.querySelectorAll('tbody tr').forEach(tr => tr.addEventListener('click', () => openDriverProfile(sorted[parseInt(tr.dataset.i)])));
         }
     }
 
@@ -711,28 +769,284 @@ function renderDrivers() {
                 <div class="fdc-nat">${driver.nationality || ''}</div>
             </div>
             ${photo}`;
-        card.addEventListener('click', () => openDriverModal(driver));
+        card.addEventListener('click', () => openDriverProfile(driver));
         grid.appendChild(card);
     });
 }
-function openDriverModal(driver) {
+
+function openDriverProfile(driver) {
     if (!driver) return;
     const c = colourFor(driver.team, teams);
-    const pos = standings.findIndex(d => d.name === driver.name);
-    const posText = pos >= 0 ? '#' + (pos + 1) : '-';
+    const pos = [...drivers].sort((a,b)=>(b.points||0)-(a.points||0)).findIndex(d=>d.name===driver.name);
+    const posText = pos >= 0 ? '#' + (pos+1) : '—';
+    const initials = (driver.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase();
+    const avatar = driver.photo
+        ? `<img class="dpp-photo" src="${driver.photo}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="dpp-fallback" style="display:none;">${initials}</div>`
+        : `<div class="dpp-fallback">${initials}</div>`;
+
+    // Race by race results
+    const driverRaces = races.filter(r => r.results && r.results.some(x => x.driver === driver.name))
+        .sort((a,b) => new Date(a.date||0)-new Date(b.date||0));
+    let raceRows = '';
+    let formArr = [];
+    driverRaces.forEach(r => {
+        const res = r.results.find(x => x.driver === driver.name);
+        if (!res) return;
+        const isDnf = res.dnf;
+        const posDisplay = isDnf ? 'DNF' : (res.pos || '—');
+        const fgClass = isDnf ? 'D' : res.pos === 1 ? 'W' : res.pos <= 3 ? 'P' : 'F';
+        formArr.push(fgClass);
+        raceRows += `<tr>
+            <td>${r.date ? new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—'}</td>
+            <td class="rt-gp">${r.name}</td>
+            <td class="pos">${posDisplay}</td>
+            <td class="points">${isDnf ? '—' : res.pts || 0}</td>
+        </tr>`;
+    });
+
+    const formHTML = formArr.slice(-5).map(f => `<div class="fg-dot ${f}">${f==='D'?'DNF':f}</div>`).join('');
+
     openModal(`
-        <div class="driver-profile">
-            ${driverAvatar(driver, 'profile-photo')}
-            <h2 class="profile-name">${driver.name}</h2>
-            <p class="profile-team" style="color:${c};">${driver.team || ''}${driver.nationality ? ' · ' + driver.nationality : ''}</p>
-            <div class="profile-grid">
-                <div class="profile-stat"><span>Championship Pos</span><strong>${posText}</strong></div>
-                <div class="profile-stat"><span>Points</span><strong>${driver.points || 0}</strong></div>
-                <div class="profile-stat"><span>Wins</span><strong>${driver.wins || 0}</strong></div>
-                <div class="profile-stat"><span>Poles</span><strong>${driver.poles || 0}</strong></div>
-                <div class="profile-stat"><span>Races</span><strong>${driver.races || 0}</strong></div>
+        <div class="driver-profile-page">
+            <div class="dpp-photo-col">
+                ${avatar}
+                ${driver.number ? `<div class="dpp-number">${driver.number}</div>` : ''}
+                ${driver.nationality ? `<div class="dpp-nat">${driver.nationality}</div>` : ''}
+            </div>
+            <div class="dpp-info">
+                <h1>${driver.name}</h1>
+                <div class="dpp-team" style="color:${c};">${driver.team || ''}</div>
+                <div class="dpp-stats">
+                    <div class="dpp-stat"><label>Championship Pos</label><strong style="color:var(--f1-red);">${posText}</strong></div>
+                    <div class="dpp-stat"><label>Points</label><strong>${driver.points || 0}</strong></div>
+                    <div class="dpp-stat"><label>Wins</label><strong>${driver.wins || 0}</strong></div>
+                    <div class="dpp-stat"><label>Poles</label><strong>${driver.poles || 0}</strong></div>
+                    <div class="dpp-stat"><label>Races</label><strong>${driver.races || 0}</strong></div>
+                    ${formArr.length ? `<div class="dpp-stat"><label>Form (last 5)</label><div class="form-guide" style="margin-top:0.4rem;">${formHTML}</div></div>` : ''}
+                </div>
+                ${raceRows ? `<div class="dpp-races">
+                    <h2>Race Results</h2>
+                    <table class="results-table">
+                        <thead><tr><th>Date</th><th>Race</th><th>Pos</th><th>Pts</th></tr></thead>
+                        <tbody>${raceRows}</tbody>
+                    </table>
+                </div>` : ''}
             </div>
         </div>`);
+}
+
+// ==================== FANTASY ====================
+const FANTASY_DRIVERS = 3; // drivers to pick
+const FANTASY_BIN = "https://api.jsonbin.io/v3/b/" + BIN_ID;
+const FANTASY_KEY = ACCESS_KEY;
+
+function fantasyUsername() { try { return localStorage.getItem('ff_fantasy_user') || null; } catch(e) { return null; } }
+function fantasySetUser(u) { try { localStorage.setItem('ff_fantasy_user', u); } catch(e) {} }
+function fantasyClearUser() { try { localStorage.removeItem('ff_fantasy_user'); } catch(e) {} }
+
+function calcFantasyPts(team) {
+    let total = 0;
+    const completedRaces = races.filter(r => r.results && r.results.length);
+    completedRaces.forEach(r => {
+        (team.drivers || []).forEach(dName => {
+            const res = r.results.find(x => x.driver === dName);
+            if (res && !res.dnf) total += (res.pts || 0);
+        });
+        if (team.constructor) {
+            const constTeam = teams.find(t => t.name === team.constructor);
+            if (constTeam) {
+                (constTeam.drivers || []).forEach(dName => {
+                    const res = r.results.find(x => x.driver === dName);
+                    if (res && !res.dnf) total += Math.round((res.pts || 0) * 0.5);
+                });
+            }
+        }
+    });
+    return total;
+}
+
+async function fantasySave() {
+    if (!JSON_CONFIGURED) { alert('JSONBin not configured'); return false; }
+    try {
+        // Read current bin, update fantasy array, write back
+        const getRes = await fetch(FANTASY_BIN + '/latest', { headers: { 'X-Access-Key': FANTASY_KEY } });
+        const json = await getRes.json();
+        const record = json.record || {};
+        record.fantasy = fantasyTeams;
+        const putRes = await fetch(FANTASY_BIN, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': '$2a$10$bHb8I.kdqaJKAUK/D6Ta2.z4U8kN.7gNKNFv2NDGDXQ5lDG21LS6a' },
+            body: JSON.stringify(record)
+        });
+        return putRes.ok;
+    } catch(e) { console.error('Fantasy save error:', e); return false; }
+}
+
+function renderFantasy() {
+    const username = fantasyUsername();
+    const joinEl = document.getElementById('fantasyJoin');
+    const teamEl = document.getElementById('fantasyMyTeam');
+    if (!joinEl || !teamEl) return;
+
+    if (!username) {
+        joinEl.classList.remove('hidden');
+        teamEl.classList.add('hidden');
+    } else {
+        joinEl.classList.add('hidden');
+        teamEl.classList.remove('hidden');
+        document.getElementById('fantasyWelcome').textContent = username.toUpperCase() + "'S TEAM";
+        renderFantasyPicker(username);
+    }
+    renderFantasyLeaderboard();
+}
+
+function fantasyJoin() {
+    const input = document.getElementById('fjUsername');
+    const u = (input.value || '').trim();
+    if (!u) { input.focus(); return; }
+    // Check if username taken
+    if (fantasyTeams.find(t => t.username.toLowerCase() === u.toLowerCase() && !fantasyTeams.find(x => x.username === u))) {
+        alert('That username is taken — try another.');
+        return;
+    }
+    fantasySetUser(u);
+    // Create team if new
+    if (!fantasyTeams.find(t => t.username === u)) {
+        fantasyTeams.push({ username: u, drivers: [], constructor: null });
+    }
+    renderFantasy();
+}
+
+function fantasyLogout() {
+    fantasyClearUser();
+    renderFantasy();
+}
+
+let pickedDrivers = [];
+let pickedConstructor = null;
+
+function renderFantasyPicker(username) {
+    const myTeam = fantasyTeams.find(t => t.username === username) || { drivers: [], constructor: null };
+    pickedDrivers = [...(myTeam.drivers || [])];
+    pickedConstructor = myTeam.constructor || null;
+
+    const pts = calcFantasyPts(myTeam);
+    document.getElementById('fantasySubtitle').textContent = pts + ' PTS THIS SEASON';
+
+    // Driver grid
+    const dGrid = document.getElementById('driverPickGrid');
+    const cGrid = document.getElementById('constructorPickGrid');
+    if (!dGrid || !cGrid) return;
+
+    dGrid.innerHTML = [...drivers].sort((a,b)=>(b.points||0)-(a.points||0)).map(d => {
+        const c = colourFor(d.team, teams);
+        const picked = pickedDrivers.includes(d.name);
+        return `<div class="ftp-card ${picked ? 'picked' : ''}" style="--tc:${c}" onclick="fantasyToggleDriver('${d.name.replace(/'/g,"\\'")}')">
+            <div class="ftpc-name">${d.name}</div>
+            <div class="ftpc-team">${d.team}</div>
+            <div class="ftpc-pts">${d.points || 0} pts</div>
+            ${picked ? '<div class="ftpc-check">✓</div>' : ''}
+        </div>`;
+    }).join('');
+
+    cGrid.innerHTML = [...teams].sort((a,b)=>(b.points||0)-(a.points||0)).map(t => {
+        const c = t.color || colourFor(t.name, teams);
+        const picked = pickedConstructor === t.name;
+        return `<div class="ftp-card ${picked ? 'picked' : ''}" style="--tc:${c}" onclick="fantasyToggleConstructor('${t.name.replace(/'/g,"\\'")}')">
+            <div class="ftpc-name">${t.name}</div>
+            <div class="ftpc-pts">${t.points || 0} pts</div>
+            ${picked ? '<div class="ftpc-check">✓</div>' : ''}
+        </div>`;
+    }).join('');
+
+    updatePickCount();
+    renderMyPicks(username);
+}
+
+function updatePickCount() {
+    const el = document.getElementById('driverPickCount');
+    if (el) el.textContent = `(${pickedDrivers.length}/${FANTASY_DRIVERS})`;
+    const btn = document.getElementById('fantasySubmitBtn');
+    if (btn) btn.disabled = pickedDrivers.length !== FANTASY_DRIVERS || !pickedConstructor;
+}
+
+function fantasyToggleDriver(name) {
+    if (pickedDrivers.includes(name)) {
+        pickedDrivers = pickedDrivers.filter(d => d !== name);
+    } else {
+        if (pickedDrivers.length >= FANTASY_DRIVERS) {
+            // swap oldest pick
+            pickedDrivers.shift();
+        }
+        pickedDrivers.push(name);
+    }
+    renderFantasyPicker(fantasyUsername());
+}
+
+function fantasyToggleConstructor(name) {
+    pickedConstructor = pickedConstructor === name ? null : name;
+    renderFantasyPicker(fantasyUsername());
+}
+
+async function fantasySubmit() {
+    const username = fantasyUsername();
+    if (!username) return;
+    const idx = fantasyTeams.findIndex(t => t.username === username);
+    if (idx >= 0) {
+        fantasyTeams[idx].drivers = [...pickedDrivers];
+        fantasyTeams[idx].constructor = pickedConstructor;
+    } else {
+        fantasyTeams.push({ username, drivers: [...pickedDrivers], constructor: pickedConstructor });
+    }
+    const btn = document.getElementById('fantasySubmitBtn');
+    if (btn) { btn.textContent = 'SAVING...'; btn.disabled = true; }
+    const ok = await fantasySave();
+    if (btn) { btn.textContent = ok ? 'SAVED ✓' : 'ERROR — TRY AGAIN'; btn.disabled = false; }
+    setTimeout(() => { if (btn) btn.textContent = 'SAVE TEAM'; }, 2000);
+    renderFantasyLeaderboard();
+}
+
+function renderMyPicks(username) {
+    const el = document.getElementById('fantasyMyPicks');
+    if (!el) return;
+    const myTeam = fantasyTeams.find(t => t.username === username);
+    if (!myTeam || (!myTeam.drivers.length && !myTeam.constructor)) { el.innerHTML = ''; return; }
+    const pts = calcFantasyPts(myTeam);
+    el.innerHTML = `<div class="fmp-box">
+        <h3>YOUR CURRENT PICKS</h3>
+        <div class="fmp-grid">
+            ${myTeam.drivers.map(d => {
+                const drv = drivers.find(x => x.name === d);
+                const c = drv ? colourFor(drv.team, teams) : '#888';
+                return `<div class="fmp-item" style="border-left:3px solid ${c};">
+                    <span>${d}</span><small>${drv ? drv.team : ''}</small>
+                </div>`;
+            }).join('')}
+            ${myTeam.constructor ? `<div class="fmp-item" style="border-left:3px solid ${teams.find(t=>t.name===myTeam.constructor)?.color||'#888'};">
+                <span>${myTeam.constructor}</span><small>Constructor</small>
+            </div>` : ''}
+        </div>
+        <div class="fmp-pts">Total Points: <strong>${pts}</strong></div>
+    </div>`;
+}
+
+function renderFantasyLeaderboard() {
+    const el = document.getElementById('fantasyLeaderboard');
+    if (!el || !fantasyTeams.length) return;
+    const ranked = [...fantasyTeams]
+        .map(t => ({ ...t, pts: calcFantasyPts(t) }))
+        .sort((a,b) => b.pts - a.pts);
+    const me = fantasyUsername();
+    el.innerHTML = `<table class="results-table">
+        <thead><tr><th>POS</th><th>MANAGER</th><th>DRIVERS</th><th>CONSTRUCTOR</th><th>PTS</th></tr></thead>
+        <tbody>${ranked.map((t,i) => `<tr ${t.username===me?'style="background:rgba(225,6,0,0.08);"':''}>
+            <td class="rt-pos">${i+1}</td>
+            <td class="rt-winner">${t.username}${t.username===me?' 👤':''}</td>
+            <td class="rt-team" style="font-size:0.82rem;">${(t.drivers||[]).join(', ')||'—'}</td>
+            <td class="rt-team">${t.constructor||'—'}</td>
+            <td class="rt-time">${t.pts}</td>
+        </tr>`).join('')}</tbody>
+    </table>`;
 }
 
 // ==================== SERVICE WORKER ====================
