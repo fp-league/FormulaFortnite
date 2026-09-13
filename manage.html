@@ -103,8 +103,7 @@
         <input id="dNat" placeholder="Nationality code (e.g. GBR)" maxlength="3" />
         <input id="dNumber" type="number" placeholder="Car number (optional)" />
         <input id="dPhoto" placeholder="Photo URL (optional)" />
-        <div class="row"><input id="dPoints" type="number" placeholder="Points" value="0" /><input id="dWins" type="number" placeholder="Wins" value="0" /></div>
-        <div class="row"><input id="dPoles" type="number" placeholder="Poles" value="0" /><input id="dRaces" type="number" placeholder="Races" value="0" /></div>
+        <p class="sub" style="margin-bottom:6px;">Points, wins, poles and races are calculated automatically from race results.</p>
         <button class="add" onclick="addDriver()">ADD DRIVER</button>
       </div>
       <div id="driversList"><p class="empty">Loading...</p></div>
@@ -269,17 +268,17 @@ async function save(){
 /* ---------- DRIVERS ---------- */
 async function addDriver(){
   const name=val('dName').trim(); if(!name){toast('Enter a driver name',false);return;}
-  data.drivers.push({id:uid(),name,team:val('dTeam').trim(),nationality:val('dNat').trim().toUpperCase(),number:val('dNumber').trim(),photo:val('dPhoto').trim(),points:num('dPoints'),wins:num('dWins'),poles:num('dPoles'),races:num('dRaces')});
-  try{ await save(); ['dName','dTeam','dNat','dNumber','dPhoto'].forEach(i=>document.getElementById(i).value=''); ['dPoints','dWins','dPoles','dRaces'].forEach(i=>document.getElementById(i).value='0'); toast('Driver added'); renderDrivers(); }
+  data.drivers.push({id:uid(),name,team:val('dTeam').trim(),nationality:val('dNat').trim().toUpperCase(),number:val('dNumber').trim(),photo:val('dPhoto').trim(),points:0,wins:0,poles:0,races:0});
+  try{ await save(); ['dName','dTeam','dNat','dNumber','dPhoto'].forEach(i=>document.getElementById(i).value=''); toast('Driver added'); renderDrivers(); }
   catch(e){ data.drivers.pop(); toast('Error: '+e.message,false); }
 }
 async function saveDriverEdit(id){
   const d=data.drivers.find(x=>x.id===id); if(!d)return;
-  d.name=document.getElementById('e_name_'+id).value.trim(); d.team=document.getElementById('e_team_'+id).value.trim(); d.photo=document.getElementById('e_photo_'+id).value.trim();
+  d.name=document.getElementById('e_name_'+id).value.trim();
+  d.team=document.getElementById('e_team_'+id).value.trim();
+  d.photo=document.getElementById('e_photo_'+id).value.trim();
   d.nationality=document.getElementById('e_nat_'+id).value.trim().toUpperCase();
   d.number=document.getElementById('e_number_'+id).value.trim();
-  d.points=parseInt(document.getElementById('e_points_'+id).value)||0; d.wins=parseInt(document.getElementById('e_wins_'+id).value)||0;
-  d.poles=parseInt(document.getElementById('e_poles_'+id).value)||0; d.races=parseInt(document.getElementById('e_races_'+id).value)||0;
   try{ await save(); editingId=null; toast('Saved'); renderDrivers(); }catch(e){ toast('Error: '+e.message,false); }
 }
 async function delDriver(id){
@@ -299,10 +298,7 @@ function renderDrivers(){
         +'<input id="e_nat_'+d.id+'" value="'+esc(d.nationality)+'" placeholder="Nationality code (e.g. GBR)" maxlength="3"/>'
         +'<input id="e_number_'+d.id+'" value="'+esc(d.number)+'" placeholder="Car number" type="number"/>'
         +'<input id="e_photo_'+d.id+'" value="'+esc(d.photo)+'" placeholder="Photo URL"/>'
-        +'<div class="grid2"><div><label>Points</label><input id="e_points_'+d.id+'" type="number" value="'+(d.points||0)+'"/></div>'
-        +'<div><label>Wins</label><input id="e_wins_'+d.id+'" type="number" value="'+(d.wins||0)+'"/></div>'
-        +'<div><label>Poles</label><input id="e_poles_'+d.id+'" type="number" value="'+(d.poles||0)+'"/></div>'
-        +'<div><label>Races</label><input id="e_races_'+d.id+'" type="number" value="'+(d.races||0)+'"/></div></div>'
+        +'<p style="font-size:.75rem;color:var(--muted);margin-bottom:8px;">Points, wins, poles and races are auto-calculated from race results.</p>'
         +'<div class="btns" style="margin-top:8px"><button class="save" onclick="saveDriverEdit(\''+d.id+'\')">Save</button>'
         +'<button class="cancel" onclick="editingId=null;renderDrivers()">Cancel</button></div></div></div>';
     }
@@ -375,6 +371,36 @@ async function addRace(){
   try{ await save(); ['rName','rTrack','rDate','rImage'].forEach(i=>document.getElementById(i).value=''); document.getElementById('rLaps').value='50'; toast('Race added'); renderRaces(); }
   catch(e){ data.races.pop(); toast('Error: '+e.message,false); }
 }
+function recalcDriverStats(){
+  // Wipe and rebuild all driver stats from race results
+  data.drivers.forEach(d => {
+    d.points = 0; d.wins = 0; d.races = 0; d.poles = 0;
+  });
+  data.races.forEach(r => {
+    // Race results
+    (r.results || []).forEach(res => {
+      const d = data.drivers.find(x => x.name === res.driver);
+      if (!d) return;
+      if (!res.dnf) {
+        d.points += (res.pts || 0);
+        if (res.pos === 1) d.wins++;
+      }
+      d.races++;
+    });
+    // Qualifying — pole positions
+    (r.qualifying || []).forEach(q => {
+      const d = data.drivers.find(x => x.name === q.driver);
+      if (d && q.pos === 1) d.poles++;
+    });
+  });
+  // Also recalc team points from driver totals
+  data.teams.forEach(t => {
+    t.points = data.drivers
+      .filter(d => (t.drivers || []).includes(d.name))
+      .reduce((sum, d) => sum + (d.points || 0), 0);
+  });
+}
+
 async function saveRaceEdit(id){
   const r=data.races.find(x=>x.id===id); if(!r)return;
   r.name=document.getElementById('e_rname_'+id).value.trim();
@@ -387,7 +413,8 @@ async function saveRaceEdit(id){
   r.fastestLap=document.getElementById('e_rflap_'+id).value.trim();
   r.results=readResultRows(id);
   r.qualifying=readQualRows(id);
-  try{ await save(); editingId=null; toast('Saved'); renderRaces(); }catch(e){ toast('Error: '+e.message,false); }
+  recalcDriverStats();
+  try{ await save(); editingId=null; toast('Saved ✓ — standings updated'); renderRaces(); renderDrivers(); renderTeams(); }catch(e){ toast('Error: '+e.message,false); }
 }
 
 /* ---------- SEASONS ---------- */
