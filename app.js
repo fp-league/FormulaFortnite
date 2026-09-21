@@ -20,6 +20,57 @@ let homeTab = 'drivers';
 let resultsSeason = 'live';
 let resultsTab = 'races';
 
+// ==================== PWA: INSTALL PROMPT ====================
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    // Show after 30s if not dismissed before
+    const dismissed = localStorage.getItem('ff_install_dismissed');
+    if (!dismissed) setTimeout(() => {
+        const banner = document.getElementById('installBanner');
+        if (banner && deferredInstallPrompt) banner.style.display = 'flex';
+    }, 30000);
+});
+
+function installApp() {
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'none';
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(choice => {
+        if (choice.outcome === 'accepted') localStorage.setItem('ff_install_dismissed', '1');
+        deferredInstallPrompt = null;
+    });
+}
+function dismissInstall() {
+    document.getElementById('installBanner').style.display = 'none';
+    localStorage.setItem('ff_install_dismissed', '1');
+}
+
+// ==================== PWA: NOTIFICATIONS ====================
+function enableNotifs() {
+    document.getElementById('notifBanner').style.display = 'none';
+    localStorage.setItem('ff_notif_dismissed', '1');
+    if (window.OneSignal) {
+        window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.Notifications.requestPermission();
+        });
+    }
+}
+function dismissNotif() {
+    document.getElementById('notifBanner').style.display = 'none';
+    localStorage.setItem('ff_notif_dismissed', '1');
+}
+
+// ==================== PWA: DEEP LINKS ====================
+function handleDeepLink() {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    if (page) navigateTo(page);
+}
+
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
     initLightsOut();
@@ -27,6 +78,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     setupModal();
     loadData();
+    handleDeepLink();
+    // Show notification prompt after 60s if not dismissed
+    setTimeout(() => {
+        const dismissed = localStorage.getItem('ff_notif_dismissed');
+        const banner = document.getElementById('notifBanner');
+        if (!dismissed && banner && 'Notification' in window && Notification.permission === 'default') {
+            banner.style.display = 'flex';
+        }
+    }, 60000);
 });
 
 // ==================== LIGHTS OUT ====================

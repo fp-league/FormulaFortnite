@@ -514,3 +514,29 @@ body::after { content:''; position:fixed; inset:0; z-index:-1; pointer-events:no
 .fmp-pts strong { color:var(--f1-red); font-family:var(--font-timer); font-size:1.3rem; }
 .fantasy-leaderboard h2 { margin-bottom:1rem; }
 .hidden { display:none !important; }
+
+/* ==================== PWA INSTALL / NOTIF BANNERS ==================== */
+.install-banner {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#1F1F27;
+    border-bottom:2px solid var(--f1-red);
+    padding:0.8rem 1.5rem;
+    gap:1rem;
+    flex-wrap:wrap;
+    position:relative;
+    z-index:101;
+    animation:slideDown 0.3s ease-out;
+}
+.notif-banner { border-color:#FF6B35; }
+@keyframes slideDown { from { transform:translateY(-100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
+.ib-left { display:flex; align-items:center; gap:0.8rem; }
+.ib-icon { font-size:1.5rem; }
+.ib-left strong { display:block; color:#fff; font-family:var(--font-display); font-size:0.9rem; font-weight:700; }
+.ib-left span { color:var(--f1-muted); font-size:0.78rem; }
+.ib-btns { display:flex; gap:0.6rem; }
+.ib-yes { background:var(--f1-red); color:#fff; border:none; padding:0.5rem 1.2rem; border-radius:6px; font-family:var(--font-display); font-weight:700; font-size:0.78rem; letter-spacing:0.05em; cursor:pointer; }
+.ib-yes:hover { background:var(--f1-red-dark); }
+.ib-no { background:transparent; color:var(--f1-muted); border:1px solid var(--f1-line); padding:0.5rem 0.8rem; border-radius:6px; cursor:pointer; font-size:0.9rem; }
+.ib-no:hover { color:#fff; }

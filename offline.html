@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formula Fortnite — Offline</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="theme-futuristic.css">
+<style>
+  body { display:flex; align-items:center; justify-content:center; min-height:100vh; text-align:center; padding:2rem; }
+  .offline-box { max-width:400px; }
+  .offline-icon { font-size:4rem; margin-bottom:1rem; }
+  .offline-box h1 { font-family:'Formula1',sans-serif; font-style:italic; color:#E10600; font-size:2rem; margin-bottom:0.5rem; }
+  .offline-box p { color:#9C9CA5; margin-bottom:2rem; line-height:1.6; }
+  .retry-btn { background:#E10600; color:#fff; border:none; padding:0.9rem 2rem; border-radius:6px; font-family:'Formula1',sans-serif; font-weight:700; font-size:0.9rem; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; }
+  .retry-btn:hover { background:#B10500; }
+</style>
+</head>
+<body>
+  <div class="offline-box">
+    <div class="offline-icon">🏁</div>
+    <h1>YOU'RE OFFLINE</h1>
+    <p>Looks like you've lost your connection. Check your signal and try again — the race waits for no one.</p>
+    <button class="retry-btn" onclick="window.location.reload()">TRY AGAIN</button>
+  </div>
+</body>
+</html>

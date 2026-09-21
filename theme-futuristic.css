@@ -1,0 +1,134 @@
+/* ==================== FF FUTURISTIC THEME ==================== */
+/* Loads on top of styles.css — remove link tag to revert instantly */
+
+:root {
+    --f1-dark:      #08080F;
+    --f1-surface:   rgba(255,255,255,0.04);
+    --f1-surface-2: rgba(255,255,255,0.08);
+    --f1-line:      rgba(255,255,255,0.09);
+    --f1-muted:     #7070A0;
+}
+
+/* ---- ANIMATED BACKGROUND ---- */
+body {
+    background: #08080F;
+    background-image:
+        radial-gradient(ellipse 80% 50% at 50% -5%, rgba(225,6,0,0.13), transparent),
+        radial-gradient(ellipse 50% 40% at 95% 95%, rgba(225,6,0,0.07), transparent);
+}
+body::after {
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background-image: repeating-linear-gradient(
+        105deg,
+        transparent 0, transparent 80px,
+        rgba(225,6,0,0.025) 80px, rgba(225,6,0,0.025) 81px
+    );
+    background-size:300% 100%;
+    animation: speedlines 12s linear infinite;
+}
+@keyframes speedlines {
+    from { background-position:0 0; }
+    to   { background-position:-600px 0; }
+}
+@media (prefers-reduced-motion:reduce) { body::after { animation:none; } }
+
+/* ---- GLASS CARDS ---- */
+.f1-driver-card,
+.f1-team-card,
+.news-mini,
+.news-hero,
+.fj-card,
+.fantasy-team-picker,
+.fmp-box,
+.results-panel,
+.cal-card:not(.next),
+.feat-card.noimg,
+.hof-banner,
+.race-strip,
+.modal-inner {
+    background: rgba(255,255,255,0.04) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* standings rows */
+.standings-table tbody tr { background: rgba(255,255,255,0.04); }
+.standings-table tbody tr:hover { background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(225,6,0,0.3); }
+
+/* results table */
+.results-table tbody tr:hover { background: rgba(255,255,255,0.06); }
+
+/* ---- GLOWING NAV ---- */
+.navbar {
+    background: rgba(8,8,15,0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.navbar::after {
+    background: linear-gradient(90deg, transparent, var(--f1-red), transparent);
+    background-size: 200% 100%;
+    animation: navsweep 3s ease-in-out infinite;
+}
+@keyframes navsweep {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ---- GLOW ON HOVER ---- */
+.f1-driver-card:hover,
+.f1-team-card:hover,
+.cal-card:hover,
+.feat-card:hover,
+.news-mini:hover,
+.news-hero:hover,
+.ftp-card:hover {
+    box-shadow: 0 8px 32px rgba(225,6,0,0.15), 0 0 0 1px rgba(225,6,0,0.35) !important;
+}
+
+/* ---- RED GLOW ON ACCENTS ---- */
+.profile-photo, .profile-photo-fallback, .dpp-photo, .dpp-fallback {
+    box-shadow: 0 0 30px rgba(225,6,0,0.25);
+}
+.logo-ff { text-shadow: 0 0 20px rgba(225,6,0,0.6); }
+.navbar::after { box-shadow: 0 0 8px rgba(225,6,0,0.4); }
+.rs-status.up { box-shadow: 0 0 8px rgba(225,6,0,0.3); }
+
+/* ---- MODAL BACKDROP ---- */
+.modal { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background: rgba(0,0,0,0.7); }
+
+/* ---- FOOTER ---- */
+.footer {
+    background: rgba(4,4,10,0.85);
+    backdrop-filter: blur(12px);
+}
+
+/* ---- SEASON DIVIDER ---- */
+.season-divider {
+    background: linear-gradient(90deg, var(--f1-red), rgba(225,6,0,0.2), transparent);
+    box-shadow: 0 0 12px rgba(225,6,0,0.4);
+}
+
+/* ---- PAGE TITLE BORDER ---- */
+.page-title {
+    border-image: linear-gradient(90deg, var(--f1-red), transparent) 1;
+}
+
+/* ---- COUNTDOWN BAR ---- */
+.countdown-bar {
+    background: linear-gradient(135deg, #a00400, var(--f1-red));
+    box-shadow: 0 0 30px rgba(225,6,0,0.35);
+}
+
+/* ---- PODIUM CARDS ---- */
+.podium-card {
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--tc) 30%, transparent);
+}
+.podium-card:hover {
+    box-shadow: 0 8px 32px color-mix(in srgb, var(--tc) 45%, transparent) !important;
+}

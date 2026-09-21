@@ -4,12 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formula Fortnite - The Elite Racing League</title>
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- OneSignal Push Notifications — replace YOUR_ONESIGNAL_APP_ID -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({ appId: "YOUR_ONESIGNAL_APP_ID", notifyButton: { enable: false } });
+      });
+    </script>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="theme-futuristic.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#E10600">
 </head>
 <body>
     <nav class="navbar">
+        <!-- Install prompt banner -->
+        <div class="install-banner" id="installBanner" style="display:none;">
+            <div class="ib-left">
+                <span class="ib-icon">🏁</span>
+                <div><strong>Install Formula Fortnite</strong><span>Add to your home screen</span></div>
+            </div>
+            <div class="ib-btns">
+                <button onclick="installApp()" class="ib-yes">INSTALL</button>
+                <button onclick="dismissInstall()" class="ib-no">✕</button>
+            </div>
+        </div>
+        <!-- Notification prompt banner -->
+        <div class="install-banner notif-banner" id="notifBanner" style="display:none;">
+            <div class="ib-left">
+                <span class="ib-icon">🔔</span>
+                <div><strong>Stay in the loop</strong><span>Get race results & news alerts</span></div>
+            </div>
+            <div class="ib-btns">
+                <button onclick="enableNotifs()" class="ib-yes">ENABLE</button>
+                <button onclick="dismissNotif()" class="ib-no">✕</button>
+            </div>
+        </div>
         <div class="nav-container">
             <div class="nav-logo">
                 <span class="logo-ff">FF</span>
