@@ -302,7 +302,7 @@ function colourFor(name, teamsArr) {
     if (t && t.color) return t.color;
     return autoColor(name || '');
 }
-function autoColor(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360; return 'hsl(' + h + ',65%,45%)'; }
+function autoColor(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360; return 'hsl(' + h + ',70%,52%)'; }
 function dot(c) { return '<span class="team-dot" style="background:' + c + '"></span>'; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; }
 

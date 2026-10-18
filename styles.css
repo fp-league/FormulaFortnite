@@ -252,7 +252,7 @@ a:hover { color:var(--f1-white); }
 /* DRIVERS */
 .drivers-sub { color:var(--f1-muted); margin:-0.5rem 0 2rem; font-size:1rem; }
 .f1-drivers-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
-.f1-driver-card { position:relative; min-height:170px; border-radius:10px; overflow:hidden; background:linear-gradient(120deg,color-mix(in srgb,var(--tc) 90%,black) 0%,color-mix(in srgb,var(--tc) 55%,#111) 100%); transition:var(--transition); }
+.f1-driver-card { position:relative; min-height:170px; border-radius:10px; overflow:hidden; background:linear-gradient(120deg, var(--tc) 0%, color-mix(in srgb,var(--tc) 40%,#0d0d12) 100%); transition:var(--transition); }
 .f1-driver-card:hover { transform:translateY(-3px); }
 .fdc-info { position:relative; z-index:2; padding:1.1rem; height:100%; display:flex; flex-direction:column; }
 .fdc-first { display:block; color:rgba(255,255,255,0.9); font-size:1rem; font-weight:600; }
