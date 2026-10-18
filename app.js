@@ -772,7 +772,7 @@ function renderTeams() {
         const drv = (team.drivers || []).map(n => miniDriver(n)).join('');
         const card = document.createElement('div');
         card.className = 'f1-team-card';
-        card.style.setProperty('--tc', c);
+        card.style.background = `linear-gradient(120deg, ${c} 0%, #0d0d12 100%)`;
         card.style.cursor = 'pointer';
         card.innerHTML = `
             <div class="ftc-top">
@@ -823,7 +823,7 @@ function renderDrivers() {
         const photo = driver.photo ? `<img class="fdc-photo" src="${driver.photo}" alt="" onerror="this.style.display='none';">` : '';
         const card = document.createElement('div');
         card.className = 'f1-driver-card';
-        card.style.setProperty('--tc', c);
+        card.style.background = `linear-gradient(120deg, ${c} 0%, #0d0d12 100%)`;
         card.style.cursor = 'pointer';
         card.innerHTML = `
             <div class="fdc-info">
