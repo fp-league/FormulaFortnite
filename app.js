@@ -132,6 +132,7 @@ function navigateTo(page) {
         else if (page === 'results') renderResults();
         else if (page === 'calendar') renderCalendar();
         else if (page === 'teams') renderTeams();
+        else if (page === 'drivers') renderDrivers();
         else if (page === 'fantasy') renderFantasy();
         window.scrollTo(0, 0);
     }
@@ -763,7 +764,10 @@ function renderTeams() {
     if (teams.length === 0) { grid.innerHTML = '<p>No teams available yet.</p>'; return; }
     [...teams].sort((a, b) => (b.points || 0) - (a.points || 0)).forEach(team => {
         const c = team.color || colourFor(team.name, teams);
-        const logo = team.logo ? `<img class="ftc-logo-img" src="${team.logo}" alt="" onerror="this.style.display='none';">` : '';
+        const logoInitial = team.name ? team.name.charAt(0).toUpperCase() : '?';
+        const logo = team.logo
+            ? `<img class="ftc-logo-img" src="${team.logo}" alt="" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'ftc-logo-initial\\'>${logoInitial}</span>';">`
+            : `<span class="ftc-logo-initial">${logoInitial}</span>`;
         const car = team.car ? `<img class="ftc-car" src="${team.car}" alt="" onerror="this.style.display='none';">` : '';
         const drv = (team.drivers || []).map(n => miniDriver(n)).join('');
         const card = document.createElement('div');
