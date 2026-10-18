@@ -302,7 +302,11 @@ function colourFor(name, teamsArr) {
     if (t && t.color) return t.color;
     return autoColor(name || '');
 }
-function autoColor(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360; return 'hsl(' + h + ',70%,52%)'; }
+function autoColor(name) {
+    const palette = ['#E10600','#0067FF','#00D2BE','#FF8000','#DC0000','#005AFF','#900000','#2B4562','#006F62','#B6BABD','#FF1E00','#0090FF','#00A3E0'];
+    let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % palette.length;
+    return palette[h];
+}
 function dot(c) { return '<span class="team-dot" style="background:' + c + '"></span>'; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; }
 
@@ -772,7 +776,7 @@ function renderTeams() {
         const drv = (team.drivers || []).map(n => miniDriver(n)).join('');
         const card = document.createElement('div');
         card.className = 'f1-team-card';
-        card.style.background = `linear-gradient(120deg, ${c} 0%, #0d0d12 100%)`;
+        card.style.background = `linear-gradient(135deg, ${c} 0%, #111 60%, #0a0a0a 100%)`;
         card.style.cursor = 'pointer';
         card.innerHTML = `
             <div class="ftc-top">
@@ -823,7 +827,7 @@ function renderDrivers() {
         const photo = driver.photo ? `<img class="fdc-photo" src="${driver.photo}" alt="" onerror="this.style.display='none';">` : '';
         const card = document.createElement('div');
         card.className = 'f1-driver-card';
-        card.style.background = `linear-gradient(120deg, ${c} 0%, #0d0d12 100%)`;
+        card.style.background = `linear-gradient(135deg, ${c} 0%, #111 60%, #0a0a0a 100%)`;
         card.style.cursor = 'pointer';
         card.innerHTML = `
             <div class="fdc-info">
