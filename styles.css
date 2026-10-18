@@ -260,7 +260,7 @@ a:hover { color:var(--f1-white); }
 .fdc-team { color:rgba(255,255,255,0.8); font-size:0.8rem; font-weight:600; margin-top:0.2rem; }
 .fdc-num { font-family:var(--font-display); font-weight:900; font-style:italic; font-size:2.4rem; color:rgba(255,255,255,0.55); margin-top:0.4rem; }
 .fdc-nat { margin-top:auto; font-family:var(--font-display); font-weight:700; font-size:0.78rem; color:rgba(255,255,255,0.85); letter-spacing:0.05em; }
-.fdc-photo { position:absolute; right:-6px; bottom:0; height:100%; width:auto; max-width:62%; object-fit:contain; object-position:bottom right; z-index:1; }
+.fdc-photo { position:absolute; right:-6px; bottom:0; height:100%; width:auto; max-width:62%; object-fit:contain; object-position:bottom right; z-index:1; mix-blend-mode:multiply; }
 
 /* DRIVER PHOTO */
 .driver-photo { width:92px; height:92px; border-radius:50%; object-fit:cover; border:3px solid var(--f1-red); margin:0 auto 0.9rem; display:block; background:var(--f1-surface-2); }
