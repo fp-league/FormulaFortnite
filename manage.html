@@ -392,6 +392,15 @@ function recalcDriverStats(){
       const d = data.drivers.find(x => x.name === q.driver);
       if (d && q.pos === 1) d.poles++;
     });
+    // Pole position bonus point (+1 pt; also counts as a pole if qualifying section not used)
+    if (r.pole) {
+      const d = data.drivers.find(x => x.name === r.pole);
+      if (d) {
+        d.points += 1;
+        const alreadyCounted = (r.qualifying || []).some(q => q.driver === r.pole && q.pos === 1);
+        if (!alreadyCounted) d.poles++;
+      }
+    }
   });
   // Also recalc team points from driver totals
   data.teams.forEach(t => {
@@ -411,6 +420,7 @@ async function saveRaceEdit(id){
   r.laps=parseInt(document.getElementById('e_rlaps_'+id).value)||0;
   r.status=document.getElementById('e_rstatus_'+id).value;
   r.fastestLap=document.getElementById('e_rflap_'+id).value.trim();
+  r.pole=document.getElementById('e_rpole_'+id).value.trim();
   r.results=readResultRows(id);
   r.qualifying=readQualRows(id);
   recalcDriverStats();
@@ -629,6 +639,7 @@ function renderRaces(){
         +'<input id="e_rlaps_'+r.id+'" type="number" value="'+(r.laps||0)+'"/></div>'
         +'<select id="e_rstatus_'+r.id+'"><option value="upcoming"'+(r.status==='upcoming'?' selected':'')+'>Upcoming</option><option value="completed"'+(r.status==='completed'?' selected':'')+'>Completed</option></select>'
         +'<input id="e_rflap_'+r.id+'" value="'+esc(r.fastestLap||'')+'" placeholder="Fastest lap driver (optional)"/>'
+        +'<select id="e_rpole_'+r.id+'"><option value="">Pole position driver (+1 pt, optional)...</option>'+data.drivers.map(d=>'<option value="'+esc(d.name)+'"'+(r.pole===d.name?' selected':'')+'>'+d.name+'</option>').join('')+'</select>'
         +'<div class="results-builder" id="rb_'+r.id+'">'
         +'<div class="rb-head"><span style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">🏁 Race Results</span><button class="edit" style="padding:5px 10px;font-size:.75rem;" onclick="addResultRow(\''+r.id+'\')">+ Add Driver</button></div>'
         +'<div id="rb_rows_'+r.id+'" class="rb-rows">'+buildResultRows(r.id, r.results)+'</div>'
