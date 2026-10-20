@@ -132,6 +132,7 @@ function navigateTo(page) {
         else if (page === 'results') renderResults();
         else if (page === 'calendar') renderCalendar();
         else if (page === 'teams') renderTeams();
+        else if (page === 'drivers') renderDrivers();
         else if (page === 'fantasy') renderFantasy();
         else if (page === 'dotd') renderDOTD();
         window.scrollTo(0, 0);
