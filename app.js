@@ -132,8 +132,8 @@ function navigateTo(page) {
         else if (page === 'results') renderResults();
         else if (page === 'calendar') renderCalendar();
         else if (page === 'teams') renderTeams();
-        else if (page === 'drivers') renderDrivers();
         else if (page === 'fantasy') renderFantasy();
+        else if (page === 'dotd') renderDOTD();
         window.scrollTo(0, 0);
     }
 }
@@ -302,11 +302,7 @@ function colourFor(name, teamsArr) {
     if (t && t.color) return t.color;
     return autoColor(name || '');
 }
-function autoColor(name) {
-    const palette = ['#E10600','#0067FF','#00D2BE','#FF8000','#DC0000','#005AFF','#900000','#2B4562','#006F62','#B6BABD','#FF1E00','#0090FF','#00A3E0'];
-    let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % palette.length;
-    return palette[h];
-}
+function autoColor(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360; return 'hsl(' + h + ',65%,45%)'; }
 function dot(c) { return '<span class="team-dot" style="background:' + c + '"></span>'; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; }
 
@@ -768,16 +764,12 @@ function renderTeams() {
     if (teams.length === 0) { grid.innerHTML = '<p>No teams available yet.</p>'; return; }
     [...teams].sort((a, b) => (b.points || 0) - (a.points || 0)).forEach(team => {
         const c = team.color || colourFor(team.name, teams);
-        const logoInitial = team.name ? team.name.charAt(0).toUpperCase() : '?';
-        const logo = team.logo
-            ? `<img class="ftc-logo-img" src="${team.logo}" alt="" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'ftc-logo-initial\\'>${logoInitial}</span>';">`
-            : `<span class="ftc-logo-initial">${logoInitial}</span>`;
+        const logo = team.logo ? `<img class="ftc-logo-img" src="${team.logo}" alt="" onerror="this.style.display='none';">` : '';
         const car = team.car ? `<img class="ftc-car" src="${team.car}" alt="" onerror="this.style.display='none';">` : '';
         const drv = (team.drivers || []).map(n => miniDriver(n)).join('');
         const card = document.createElement('div');
         card.className = 'f1-team-card';
         card.style.setProperty('--tc', c);
-        card.style.setProperty('background', `linear-gradient(135deg, ${c} 0%, #111 60%, #0a0a0a 100%)`, 'important');
         card.style.cursor = 'pointer';
         card.innerHTML = `
             <div class="ftc-top">
@@ -829,7 +821,6 @@ function renderDrivers() {
         const card = document.createElement('div');
         card.className = 'f1-driver-card';
         card.style.setProperty('--tc', c);
-        card.style.setProperty('background', `linear-gradient(135deg, ${c} 0%, #111 60%, #0a0a0a 100%)`, 'important');
         card.style.cursor = 'pointer';
         card.innerHTML = `
             <div class="fdc-info">
@@ -1117,6 +1108,180 @@ function renderFantasyLeaderboard() {
             <td class="rt-time">${t.pts}</td>
         </tr>`).join('')}</tbody>
     </table>`;
+}
+
+// ==================== FANTASY TABS ====================
+function switchFantasyTab(tab) {
+    document.getElementById('fantasyTabTeam').classList.toggle('hidden', tab !== 'team');
+    document.getElementById('fantasyTabPredictions').classList.toggle('hidden', tab !== 'predictions');
+    document.getElementById('ftab-team').classList.toggle('active', tab === 'team');
+    document.getElementById('ftab-predictions').classList.toggle('active', tab === 'predictions');
+    if (tab === 'predictions') renderPredictions();
+}
+
+// ==================== PREDICTIONS ====================
+function predictionsKey() {
+    return 'ff_predictions_' + (fantasyUsername() || '__guest');
+}
+
+function loadPredictions() {
+    try { return JSON.parse(localStorage.getItem(predictionsKey()) || '{}'); } catch(e) { return {}; }
+}
+
+function savePredictions(preds) {
+    try { localStorage.setItem(predictionsKey(), JSON.stringify(preds)); } catch(e) {}
+}
+
+function renderPredictions() {
+    const el = document.getElementById('predictionsContent');
+    if (!el) return;
+
+    const username = fantasyUsername();
+    const completed = races.filter(r => r.results && r.results.length > 0).sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+    const upcoming = races.filter(r => !r.results || r.results.length === 0).sort((a,b) => new Date(a.date||0) - new Date(b.date||0));
+    const preds = loadPredictions();
+
+    if (!username) {
+        el.innerHTML = `<div class="pred-notice">
+            <p>Join Fantasy to make predictions!</p>
+            <button class="btn btn-primary" onclick="switchFantasyTab('team')">JOIN FANTASY</button>
+        </div>`;
+        return;
+    }
+
+    let html = '';
+
+    // Upcoming races — make picks
+    if (upcoming.length) {
+        html += `<h2 style="margin:1.5rem 0 1rem;">UPCOMING RACES</h2>`;
+        html += upcoming.map(r => {
+            const myPick = preds[r.id];
+            return `<div class="pred-card">
+                <div class="pred-race-header">
+                    <span class="pred-race-name">${r.name || 'Race'}</span>
+                    <span class="pred-race-date">${r.date ? new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : ''}</span>
+                </div>
+                <p class="pred-label">Predict the race winner:</p>
+                <div class="pred-grid">
+                    ${drivers.map(d => {
+                        const c = colourFor(d.team, teams);
+                        const picked = myPick === d.name;
+                        return `<div class="pred-driver ${picked?'pred-picked':''}" style="--tc:${c}" onclick="setPrediction('${r.id}','${d.name.replace(/'/g,"\\'")}')">
+                            <div class="pred-d-name">${d.name}</div>
+                            <div class="pred-d-team">${d.team||''}</div>
+                            ${picked ? '<div class="pred-check">✓ YOUR PICK</div>' : ''}
+                        </div>`;
+                    }).join('')}
+                </div>
+                ${myPick ? `<p class="pred-saved">🏁 You predicted: <strong>${myPick}</strong></p>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    // Completed races — show results
+    if (completed.length) {
+        html += `<h2 style="margin:1.5rem 0 1rem;">PAST PREDICTIONS</h2>`;
+        html += completed.map(r => {
+            const myPick = preds[r.id];
+            const actualWinner = r.results && r.results.length ? r.results[0].driver : null;
+            const correct = myPick && actualWinner && myPick === actualWinner;
+            const wrong = myPick && actualWinner && myPick !== actualWinner;
+            return `<div class="pred-card pred-past ${correct?'pred-correct':wrong?'pred-wrong':''}">
+                <div class="pred-race-header">
+                    <span class="pred-race-name">${r.name || 'Race'}</span>
+                    <span class="pred-race-date">${r.date ? new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : ''}</span>
+                </div>
+                <div class="pred-result-row">
+                    <span>🏆 Winner: <strong>${actualWinner || '—'}</strong></span>
+                    ${myPick ? `<span class="pred-badge ${correct?'pred-badge-win':wrong?'pred-badge-loss':''}">${correct?'✅ CORRECT':'❌ '+myPick}</span>` : '<span class="pred-badge pred-badge-none">No pick</span>'}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    if (!upcoming.length && !completed.length) {
+        html = `<p style="color:var(--f1-muted);padding:2rem;text-align:center;">No races in the calendar yet.</p>`;
+    }
+
+    el.innerHTML = html;
+}
+
+function setPrediction(raceId, driverName) {
+    const preds = loadPredictions();
+    const race = races.find(r => r.id == raceId);
+    // Lock if race already has results
+    if (race && race.results && race.results.length) return;
+    preds[raceId] = driverName;
+    savePredictions(preds);
+    renderPredictions();
+}
+
+// ==================== DRIVER OF THE DAY ====================
+function renderDOTD() {
+    const el = document.getElementById('dotdContent');
+    if (!el) return;
+
+    const completed = races.filter(r => r.results && r.results.length > 0).sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+
+    if (!completed.length) {
+        el.innerHTML = `<p style="color:var(--f1-muted);padding:2rem;text-align:center;">No completed races yet — check back after the first race!</p>`;
+        return;
+    }
+
+    const myVotes = getDOTDVotes();
+
+    el.innerHTML = completed.map(r => {
+        const raceDrivers = r.results.map(res => res.driver).filter(Boolean);
+        const votes = getDOTDVotesForRace(r.id);
+        const totalVotes = Object.values(votes).reduce((a,b) => a+b, 0);
+        const myVote = myVotes[r.id];
+        const votingClosed = false; // always open for past races
+
+        return `<div class="dotd-race-block">
+            <div class="dotd-race-header">
+                <h2>${r.name || 'Race'}</h2>
+                <span class="dotd-date">${r.date ? new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''}</span>
+            </div>
+            <p class="dotd-hint">${myVote ? `You voted for <strong>${myVote}</strong>` : 'Vote for your Driver of the Day:'}</p>
+            <div class="dotd-grid">
+                ${raceDrivers.map(name => {
+                    const drv = drivers.find(d => d.name === name);
+                    const c = drv ? colourFor(drv.team, teams) : '#888';
+                    const vCount = votes[name] || 0;
+                    const pct = totalVotes ? Math.round(vCount / totalVotes * 100) : 0;
+                    const voted = myVote === name;
+                    return `<div class="dotd-card ${voted?'dotd-voted':''}" style="--tc:${c}" onclick="voteDOTD('${r.id}','${name.replace(/'/g,"\\'")}')">
+                        <div class="dotd-name">${name}</div>
+                        <div class="dotd-team">${drv ? drv.team : ''}</div>
+                        ${myVote ? `<div class="dotd-bar-wrap"><div class="dotd-bar" style="width:${pct}%;background:${c}"></div></div>
+                        <div class="dotd-pct">${pct}% (${vCount})</div>` : ''}
+                        ${voted ? '<div class="dotd-check">⭐ YOUR VOTE</div>' : ''}
+                    </div>`;
+                }).join('')}
+            </div>
+            ${totalVotes ? `<p class="dotd-total">${totalVotes} vote${totalVotes!==1?'s':''} cast</p>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function getDOTDVotes() {
+    try { return JSON.parse(localStorage.getItem('ff_dotd_votes') || '{}'); } catch(e) { return {}; }
+}
+
+function getDOTDVotesForRace(raceId) {
+    try { return JSON.parse(localStorage.getItem('ff_dotd_tally_' + raceId) || '{}'); } catch(e) { return {}; }
+}
+
+function voteDOTD(raceId, driverName) {
+    const myVotes = getDOTDVotes();
+    if (myVotes[raceId]) return; // already voted
+    myVotes[raceId] = driverName;
+    try { localStorage.setItem('ff_dotd_votes', JSON.stringify(myVotes)); } catch(e) {}
+    // Update tally
+    const tally = getDOTDVotesForRace(raceId);
+    tally[driverName] = (tally[driverName] || 0) + 1;
+    try { localStorage.setItem('ff_dotd_tally_' + raceId, JSON.stringify(tally)); } catch(e) {}
+    renderDOTD();
 }
 
 // ==================== SERVICE WORKER ====================
