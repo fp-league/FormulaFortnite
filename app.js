@@ -304,7 +304,7 @@ function colourFor(name, teamsArr) {
     if (t && t.color) return t.color;
     return autoColor(name || '');
 }
-function autoColor(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360; return 'hsl(' + h + ',65%,45%)'; }
+function autoColor(name) { const p=['#E10600','#0067FF','#00D2BE','#FF8000','#DC0000','#005AFF','#900000','#2B4562','#006F62','#B6BABD','#FF1E00','#0090FF','#00A3E0']; let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%p.length; return p[h]; }
 function dot(c) { return '<span class="team-dot" style="background:' + c + '"></span>'; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; }
 
@@ -460,8 +460,8 @@ function renderStandingsView() {
                     });
                 });
             }
-            panel.innerHTML = `<table class="results-table std-table"><thead><tr>
-                <th>POS</th><th>DRIVER</th><th>NAT</th><th>TEAM</th><th>FORM</th><th>GAP</th><th>PTS</th>
+            panel.innerHTML = `<div style="overflow-x:auto;"><table class="results-table std-table"><thead><tr>
+                <th>POS</th><th>DRIVER</th><th class="std-hide-mobile">NAT</th><th>TEAM</th><th class="std-hide-mobile">FORM</th><th>GAP</th><th>PTS</th>
             </tr></thead><tbody>` +
                 sorted.map((d, i) => {
                     const gap = i === 0 ? '<span class="pts-leader">LEADER</span>' : `<span class="pts-gap">-${leader - (d.points||0)}</span>`;
@@ -469,13 +469,13 @@ function renderStandingsView() {
                     return `<tr data-i="${i}" style="cursor:pointer;">
                         <td class="rt-pos">${i + 1}</td>
                         <td class="std-driver">${driverAvatar(d,'std-avatar')}<span>${d.name}</span></td>
-                        <td class="std-nat">${d.nationality || '—'}</td>
-                        <td class="rt-team">${dot(colourFor(d.team, data.teams))}${d.team}</td>
-                        <td><div class="form-guide">${form || '—'}</div></td>
+                        <td class="std-nat std-hide-mobile">${d.nationality || '—'}</td>
+                        <td class="rt-team">${dot(colourFor(d.team, data.teams))}${d.team || '—'}</td>
+                        <td class="std-hide-mobile"><div class="form-guide">${form || '—'}</div></td>
                         <td>${gap}</td>
                         <td class="rt-time">${d.points || 0}</td>
                     </tr>`;
-                }).join('') + `</tbody></table>`;
+                }).join('') + `</tbody></table></div>`;
             panel.querySelectorAll('tbody tr').forEach(tr => tr.addEventListener('click', () => openDriverProfile(sorted[parseInt(tr.dataset.i)])));
         }
     }
