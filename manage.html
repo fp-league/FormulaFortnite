@@ -194,6 +194,66 @@
       <h2 style="margin-top:20px;">Archived Seasons</h2>
       <div id="seasonsList"><p class="empty">Loading...</p></div>
     </div>
+
+    <!-- PAST SEASON EDITOR -->
+    <div class="panel" id="archiveEditPanel">
+      <button class="backbtn" onclick="closeArchiveEdit()">&larr; Back to Seasons</button>
+      <h1 id="archiveEditTitle" style="margin-bottom:4px;"></h1>
+      <p class="sub" id="archiveEditSub" style="margin-bottom:12px;"></p>
+      <div class="tabs" id="archiveEditTabs">
+        <button class="tab active" onclick="switchArchiveTab('drivers')">🏁 Drivers</button>
+        <button class="tab" onclick="switchArchiveTab('teams')">👥 Teams</button>
+        <button class="tab" onclick="switchArchiveTab('races')">🏎️ Races</button>
+      </div>
+      <!-- Drivers sub-panel -->
+      <div id="aep-drivers" class="aep-tab">
+        <div class="card">
+          <h2>Add Driver</h2>
+          <input id="aep_dName" placeholder="Driver name" />
+          <input id="aep_dTeam" placeholder="Team name" />
+          <input id="aep_dNat" placeholder="Nationality (e.g. GBR)" maxlength="3" />
+          <input id="aep_dNumber" type="number" placeholder="Number (optional)" />
+          <div class="grid2">
+            <div><label>Points</label><input id="aep_dPts" type="number" value="0" /></div>
+            <div><label>Wins</label><input id="aep_dWins" type="number" value="0" /></div>
+            <div><label>Poles</label><input id="aep_dPoles" type="number" value="0" /></div>
+            <div><label>Races</label><input id="aep_dRaces" type="number" value="0" /></div>
+          </div>
+          <input id="aep_dPhoto" placeholder="Photo URL (optional)" />
+          <button class="add" onclick="aepAddDriver()">ADD DRIVER</button>
+        </div>
+        <div id="aep-driversList"></div>
+      </div>
+      <!-- Teams sub-panel -->
+      <div id="aep-teams" class="aep-tab" style="display:none;">
+        <div class="card">
+          <h2>Add Team</h2>
+          <input id="aep_tName" placeholder="Team name" />
+          <input id="aep_tDrivers" placeholder="Drivers (comma separated)" />
+          <input id="aep_tPts" type="number" placeholder="Points" value="0" />
+          <label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Team colour</label>
+          <input id="aep_tColor" type="color" value="#E10600" style="height:44px;padding:4px;" />
+          <button class="add" onclick="aepAddTeam()">ADD TEAM</button>
+        </div>
+        <div id="aep-teamsList"></div>
+      </div>
+      <!-- Races sub-panel -->
+      <div id="aep-races" class="aep-tab" style="display:none;">
+        <div class="card">
+          <h2>Add Race</h2>
+          <input id="aep_rName" placeholder="Race name" />
+          <input id="aep_rTrack" placeholder="Track" />
+          <input id="aep_rDate" type="date" />
+          <div class="row">
+            <select id="aep_rFormat"><option>Sprint</option><option>Classic</option><option>Championship</option><option>Endurance</option></select>
+            <input id="aep_rLaps" type="number" placeholder="Laps" value="50" />
+          </div>
+          <button class="add" onclick="aepAddRace()">ADD RACE</button>
+        </div>
+        <div id="aep-racesList"></div>
+      </div>
+    </div>
+
   </div>
 
   <div id="toast"></div>
@@ -614,7 +674,9 @@ function renderSeasons(){
     return '<div class="item"><div class="top"><div class="info">'
       +'<div class="name">'+nm+'</div>'
       +'<div class="stats">'+((s.drivers||[]).length)+' drivers &middot; '+((s.teams||[]).length)+' teams &middot; '+((s.races||[]).length)+' races</div></div>'
-      +'<div class="btns"><button class="del" onclick="delArchive(\''+nm+'\')">Del</button></div></div></div>';
+      +'<div class="btns">'
+      +'<button class="edit" onclick="openArchiveEdit(\''+nm+'\')">Edit</button>'
+      +'<button class="del" onclick="delArchive(\''+nm+'\')">Del</button></div></div></div>';
   }).join('');
 }
 async function delRace(id){
@@ -698,6 +760,302 @@ function renderNews(){
       +'<div class="btns"><button class="edit" onclick="editingId=\''+n.id+'\';renderNews()">Edit</button>'
       +'<button class="del" onclick="delNews(\''+n.id+'\')">Del</button></div></div></div>';
   }).join('');
+}
+
+/* ============================================================
+   PAST SEASON EDITOR
+   ============================================================ */
+let aepSeason = null; // currently editing archive season key
+let aepEditId = null; // item being inline-edited within archive
+
+function openArchiveEdit(nm){
+  aepSeason = nm;
+  aepEditId = null;
+  document.getElementById('archiveEditTitle').textContent = 'SEASON: ' + nm;
+  const s = data.archive[nm]||{};
+  document.getElementById('archiveEditSub').textContent =
+    (s.drivers||[]).length+' drivers · '+(s.teams||[]).length+' teams · '+(s.races||[]).length+' races';
+  // Hide hub / other panels, show archive edit panel
+  document.getElementById('adminHub').style.display='none';
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('archiveEditPanel').classList.add('active');
+  switchArchiveTab('drivers');
+  window.scrollTo(0,0);
+}
+
+function closeArchiveEdit(){
+  aepSeason = null; aepEditId = null;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('seasonsPanel').classList.add('active');
+  renderSeasons();
+}
+
+function switchArchiveTab(tab){
+  document.querySelectorAll('.aep-tab').forEach(el=>el.style.display='none');
+  document.getElementById('aep-'+tab).style.display='block';
+  document.querySelectorAll('#archiveEditTabs .tab').forEach(b=>b.classList.remove('active'));
+  const idx = {drivers:0,teams:1,races:2}[tab];
+  document.querySelectorAll('#archiveEditTabs .tab')[idx].classList.add('active');
+  if(tab==='drivers') aepRenderDrivers();
+  else if(tab==='teams') aepRenderTeams();
+  else if(tab==='races') aepRenderRaces();
+}
+
+function aepGet(){ return data.archive[aepSeason] || (data.archive[aepSeason]={}); }
+
+async function aepSave(msg){
+  try{ await save(); toast(msg||'Saved'); return true; }
+  catch(e){ toast('Error: '+e.message,false); return false; }
+}
+
+/* ---- ARCHIVE DRIVERS ---- */
+function aepRenderDrivers(){
+  const s = aepGet();
+  const list = document.getElementById('aep-driversList');
+  if(!(s.drivers||[]).length){ list.innerHTML='<p class="empty">No drivers yet.</p>'; return; }
+  list.innerHTML = (s.drivers||[]).map(d=>{
+    if(aepEditId===d.id){
+      return '<div class="item"><div style="border:none;margin:0;padding:0">'
+        +'<input id="aep_ed_name_'+d.id+'" value="'+esc(d.name)+'" placeholder="Name"/>'
+        +'<input id="aep_ed_team_'+d.id+'" value="'+esc(d.team||'')+'" placeholder="Team"/>'
+        +'<input id="aep_ed_nat_'+d.id+'" value="'+esc(d.nationality||'')+'" placeholder="Nationality" maxlength="3"/>'
+        +'<input id="aep_ed_num_'+d.id+'" type="number" value="'+(d.number||'')+'" placeholder="Number"/>'
+        +'<div class="grid2">'
+        +'<div><label>Points</label><input id="aep_ed_pts_'+d.id+'" type="number" value="'+(d.points||0)+'"/></div>'
+        +'<div><label>Wins</label><input id="aep_ed_wins_'+d.id+'" type="number" value="'+(d.wins||0)+'"/></div>'
+        +'<div><label>Poles</label><input id="aep_ed_poles_'+d.id+'" type="number" value="'+(d.poles||0)+'"/></div>'
+        +'<div><label>Races</label><input id="aep_ed_races_'+d.id+'" type="number" value="'+(d.races||0)+'"/></div>'
+        +'</div>'
+        +'<input id="aep_ed_photo_'+d.id+'" value="'+esc(d.photo||'')+'" placeholder="Photo URL"/>'
+        +'<div class="btns" style="margin-top:8px">'
+        +'<button class="save" onclick="aepSaveDriver(\''+d.id+'\')">Save</button>'
+        +'<button class="cancel" onclick="aepEditId=null;aepRenderDrivers()">Cancel</button></div></div></div>';
+    }
+    return '<div class="item"><div class="top"><div class="info">'
+      +'<div class="name">'+esc(d.name)+'</div>'
+      +'<div class="meta">'+(d.team||'No team')+' · '+(d.nationality||'')+'</div>'
+      +'<div class="stats">'+( d.points||0)+' pts · '+(d.wins||0)+' wins · '+(d.poles||0)+' poles · '+(d.races||0)+' races</div></div>'
+      +'<div class="btns">'
+      +'<button class="edit" onclick="aepEditId=\''+d.id+'\';aepRenderDrivers()">Edit</button>'
+      +'<button class="del" onclick="aepDelDriver(\''+d.id+'\')">Del</button>'
+      +'</div></div></div>';
+  }).join('');
+}
+
+async function aepAddDriver(){
+  const s = aepGet();
+  if(!s.drivers) s.drivers=[];
+  const nm = document.getElementById('aep_dName').value.trim();
+  if(!nm){ alert('Enter a name'); return; }
+  s.drivers.push({
+    id: uid(), name: nm,
+    team: document.getElementById('aep_dTeam').value.trim(),
+    nationality: document.getElementById('aep_dNat').value.trim().toUpperCase(),
+    number: parseInt(document.getElementById('aep_dNumber').value)||0,
+    points: parseInt(document.getElementById('aep_dPts').value)||0,
+    wins: parseInt(document.getElementById('aep_dWins').value)||0,
+    poles: parseInt(document.getElementById('aep_dPoles').value)||0,
+    races: parseInt(document.getElementById('aep_dRaces').value)||0,
+    photo: document.getElementById('aep_dPhoto').value.trim()
+  });
+  if(await aepSave('Driver added')){
+    ['aep_dName','aep_dTeam','aep_dNat','aep_dNumber','aep_dPts','aep_dWins','aep_dPoles','aep_dRaces','aep_dPhoto'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=el.type==='number'?'0':''; });
+    aepRenderDrivers();
+  } else s.drivers.pop();
+}
+
+async function aepSaveDriver(id){
+  const s = aepGet();
+  const d = (s.drivers||[]).find(x=>x.id===id); if(!d) return;
+  const bk = {...d};
+  d.name = document.getElementById('aep_ed_name_'+id).value.trim()||d.name;
+  d.team = document.getElementById('aep_ed_team_'+id).value.trim();
+  d.nationality = document.getElementById('aep_ed_nat_'+id).value.trim().toUpperCase();
+  d.number = parseInt(document.getElementById('aep_ed_num_'+id).value)||0;
+  d.points = parseInt(document.getElementById('aep_ed_pts_'+id).value)||0;
+  d.wins = parseInt(document.getElementById('aep_ed_wins_'+id).value)||0;
+  d.poles = parseInt(document.getElementById('aep_ed_poles_'+id).value)||0;
+  d.races = parseInt(document.getElementById('aep_ed_races_'+id).value)||0;
+  d.photo = document.getElementById('aep_ed_photo_'+id).value.trim();
+  if(await aepSave('Driver saved')){ aepEditId=null; aepRenderDrivers(); } else Object.assign(d,bk);
+}
+
+async function aepDelDriver(id){
+  if(!confirm('Delete this driver from the archived season?')) return;
+  const s = aepGet();
+  const bk = (s.drivers||[]).slice();
+  s.drivers = (s.drivers||[]).filter(x=>x.id!==id);
+  if(await aepSave('Driver deleted')) aepRenderDrivers(); else s.drivers=bk;
+}
+
+/* ---- ARCHIVE TEAMS ---- */
+function aepRenderTeams(){
+  const s = aepGet();
+  const list = document.getElementById('aep-teamsList');
+  if(!(s.teams||[]).length){ list.innerHTML='<p class="empty">No teams yet.</p>'; return; }
+  list.innerHTML = (s.teams||[]).map(t=>{
+    if(aepEditId===t.id){
+      return '<div class="item"><div style="border:none;margin:0;padding:0">'
+        +'<input id="aep_et_name_'+t.id+'" value="'+esc(t.name)+'" placeholder="Team name"/>'
+        +'<input id="aep_et_drivers_'+t.id+'" value="'+esc((t.drivers||[]).join(', '))+'" placeholder="Drivers (comma separated)"/>'
+        +'<input id="aep_et_pts_'+t.id+'" type="number" value="'+(t.points||0)+'" placeholder="Points"/>'
+        +'<label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Colour</label>'
+        +'<input id="aep_et_color_'+t.id+'" type="color" value="'+(t.color||'#E10600')+'" style="height:44px;padding:4px;margin-bottom:10px;"/>'
+        +'<div class="btns">'
+        +'<button class="save" onclick="aepSaveTeam(\''+t.id+'\')">Save</button>'
+        +'<button class="cancel" onclick="aepEditId=null;aepRenderTeams()">Cancel</button></div></div></div>';
+    }
+    return '<div class="item"><div class="top"><div class="info">'
+      +'<div class="name" style="display:flex;align-items:center;gap:8px;">'
+        +'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(t.color||'#888')+'"></span>'
+        +esc(t.name)+'</div>'
+      +'<div class="meta">'+(t.points||0)+' pts</div>'
+      +'<div class="stats">'+((t.drivers||[]).join(', ')||'No drivers')+'</div></div>'
+      +'<div class="btns">'
+      +'<button class="edit" onclick="aepEditId=\''+t.id+'\';aepRenderTeams()">Edit</button>'
+      +'<button class="del" onclick="aepDelTeam(\''+t.id+'\')">Del</button>'
+      +'</div></div></div>';
+  }).join('');
+}
+
+async function aepAddTeam(){
+  const s = aepGet();
+  if(!s.teams) s.teams=[];
+  const nm = document.getElementById('aep_tName').value.trim();
+  if(!nm){ alert('Enter a team name'); return; }
+  s.teams.push({
+    id: uid(), name: nm,
+    drivers: document.getElementById('aep_tDrivers').value.split(',').map(x=>x.trim()).filter(Boolean),
+    points: parseInt(document.getElementById('aep_tPts').value)||0,
+    color: document.getElementById('aep_tColor').value
+  });
+  if(await aepSave('Team added')){
+    ['aep_tName','aep_tDrivers','aep_tPts'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=el.type==='number'?'0':''; });
+    aepRenderTeams();
+  } else s.teams.pop();
+}
+
+async function aepSaveTeam(id){
+  const s = aepGet();
+  const t = (s.teams||[]).find(x=>x.id===id); if(!t) return;
+  const bk = {...t};
+  t.name = document.getElementById('aep_et_name_'+id).value.trim()||t.name;
+  t.drivers = document.getElementById('aep_et_drivers_'+id).value.split(',').map(x=>x.trim()).filter(Boolean);
+  t.points = parseInt(document.getElementById('aep_et_pts_'+id).value)||0;
+  t.color = document.getElementById('aep_et_color_'+id).value;
+  if(await aepSave('Team saved')){ aepEditId=null; aepRenderTeams(); } else Object.assign(t,bk);
+}
+
+async function aepDelTeam(id){
+  if(!confirm('Delete this team from the archived season?')) return;
+  const s = aepGet();
+  const bk = (s.teams||[]).slice();
+  s.teams = (s.teams||[]).filter(x=>x.id!==id);
+  if(await aepSave('Team deleted')) aepRenderTeams(); else s.teams=bk;
+}
+
+/* ---- ARCHIVE RACES ---- */
+function aepRenderRaces(){
+  const s = aepGet();
+  const list = document.getElementById('aep-racesList');
+  if(!(s.races||[]).length){ list.innerHTML='<p class="empty">No races yet.</p>'; return; }
+  const sorted = (s.races||[]).slice().sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+  const fmts=['Sprint','Classic','Championship','Endurance'];
+  list.innerHTML = sorted.map(r=>{
+    if(aepEditId===r.id){
+      return '<div class="item"><div style="border:none;margin:0;padding:0">'
+        +'<input id="aep_er_name_'+r.id+'" value="'+esc(r.name)+'" placeholder="Race name"/>'
+        +'<input id="aep_er_track_'+r.id+'" value="'+esc(r.track||'')+'" placeholder="Track"/>'
+        +'<input id="aep_er_date_'+r.id+'" type="date" value="'+(r.date||'')+'"/>'
+        +'<div class="row"><select id="aep_er_format_'+r.id+'">'+fmts.map(f=>'<option value="'+f+'"'+(r.format===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'
+        +'<input id="aep_er_laps_'+r.id+'" type="number" value="'+(r.laps||50)+'"/></div>'
+        +'<div class="results-builder" id="aep_rb_'+r.id+'">'
+        +'<div class="rb-head"><span style="font-size:.72rem;color:var(--muted);text-transform:uppercase;">🏁 Results</span>'
+        +'<button class="edit" style="padding:5px 10px;font-size:.75rem;" onclick="aepAddResultRow(\''+r.id+'\')">+ Add Driver</button></div>'
+        +'<div class="rb-rows" id="aep_rbrows_'+r.id+'">'
+        +(r.results||[]).map((res,i)=>aepResultRow(res,i,r.id)).join('')
+        +'</div></div>'
+        +'<div class="btns" style="margin-top:8px">'
+        +'<button class="save" onclick="aepSaveRace(\''+r.id+'\')">Save</button>'
+        +'<button class="cancel" onclick="aepEditId=null;aepRenderRaces()">Cancel</button></div></div></div>';
+    }
+    const winner = (r.results||[])[0];
+    return '<div class="item"><div class="top"><div class="info">'
+      +'<div class="name">'+esc(r.name||'Race')+'</div>'
+      +'<div class="meta">'+fmtDate(r.date)+' · '+(r.format||'')+' · '+(r.laps||0)+' laps</div>'
+      +'<div class="stats">'+(winner?'🏆 '+winner.driver+' ('+winner.pts+' pts)':'No results yet')+'</div></div>'
+      +'<div class="btns">'
+      +'<button class="edit" onclick="aepEditId=\''+r.id+'\';aepRenderRaces()">Edit</button>'
+      +'<button class="del" onclick="aepDelRace(\''+r.id+'\')">Del</button>'
+      +'</div></div></div>';
+  }).join('');
+}
+
+function aepResultRow(res,i,raceId){
+  const s=aepGet();
+  const dOpts='<option value="">Pick driver...</option>'+(s.drivers||[]).map(d=>'<option value="'+esc(d.name)+'"'+(d.name===res.driver?' selected':'')+'>'+d.name+'</option>').join('');
+  return '<div class="rb-row" id="aep_rr_'+raceId+'_'+i+'">'
+    +'<select class="rb-driver" onchange="this.nextElementSibling.value=parseInt(this.selectedIndex)">'+dOpts+'</select>'
+    +'<input class="rb-pos" type="number" placeholder="Pos" value="'+(res.pos||i+1)+'" min="1"/>'
+    +'<input class="rb-pts" type="number" placeholder="Pts" value="'+(res.pts||0)+'" min="0"/>'
+    +'<button class="del rb-del" onclick="this.closest(\'.rb-row\').remove()" style="padding:7px 10px;">✕</button>'
+    +'</div>';
+}
+
+function aepAddResultRow(raceId){
+  const container=document.getElementById('aep_rbrows_'+raceId);
+  if(!container)return;
+  const i=container.children.length;
+  const tmp=document.createElement('div'); tmp.innerHTML=aepResultRow({},i,raceId);
+  container.appendChild(tmp.firstChild);
+}
+
+async function aepAddRace(){
+  const s = aepGet();
+  if(!s.races) s.races=[];
+  const nm = document.getElementById('aep_rName').value.trim();
+  if(!nm){ alert('Enter a race name'); return; }
+  s.races.push({
+    id: uid(), name: nm,
+    track: document.getElementById('aep_rTrack').value.trim(),
+    date: document.getElementById('aep_rDate').value,
+    format: document.getElementById('aep_rFormat').value,
+    laps: parseInt(document.getElementById('aep_rLaps').value)||50,
+    status:'completed', results:[]
+  });
+  if(await aepSave('Race added')){
+    ['aep_rName','aep_rTrack','aep_rDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    aepRenderRaces();
+  } else s.races.pop();
+}
+
+async function aepSaveRace(id){
+  const s = aepGet();
+  const r = (s.races||[]).find(x=>x.id===id); if(!r) return;
+  const bk = {...r, results:[...(r.results||[])]};
+  r.name = document.getElementById('aep_er_name_'+id).value.trim()||r.name;
+  r.track = document.getElementById('aep_er_track_'+id).value.trim();
+  r.date = document.getElementById('aep_er_date_'+id).value;
+  r.format = document.getElementById('aep_er_format_'+id).value;
+  r.laps = parseInt(document.getElementById('aep_er_laps_'+id).value)||50;
+  // collect results
+  const rows = document.querySelectorAll('#aep_rbrows_'+id+' .rb-row');
+  r.results = [];
+  rows.forEach(row=>{
+    const sel=row.querySelector('select'); const inputs=row.querySelectorAll('input');
+    const driver=(sel?sel.value:'').trim(); if(!driver)return;
+    r.results.push({ driver, pos:parseInt(inputs[0].value)||1, pts:parseInt(inputs[1].value)||0 });
+  });
+  r.results.sort((a,b)=>a.pos-b.pos);
+  if(await aepSave('Race saved')){ aepEditId=null; aepRenderRaces(); } else Object.assign(r,bk);
+}
+
+async function aepDelRace(id){
+  if(!confirm('Delete this race from the archived season?')) return;
+  const s = aepGet();
+  const bk = (s.races||[]).slice();
+  s.races = (s.races||[]).filter(x=>x.id!==id);
+  if(await aepSave('Race deleted')) aepRenderRaces(); else s.races=bk;
 }
 </script>
 </body>
