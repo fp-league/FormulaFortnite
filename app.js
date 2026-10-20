@@ -104,7 +104,8 @@ function initLightsOut() {
 function setupNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
-        if (link.getAttribute('href') && link.getAttribute('href').endsWith('.html')) return;
+        const href = link.getAttribute('href') || '';
+        if (href.endsWith('.html') || href.startsWith('http')) return;
         link.addEventListener('click', (e) => {
             e.preventDefault();
             navigateTo(link.dataset.page);
