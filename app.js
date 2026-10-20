@@ -23,6 +23,25 @@ let resultsTab = 'races';
 // ==================== PWA: INSTALL PROMPT ====================
 let deferredInstallPrompt = null;
 
+// iOS Safari install banner
+(function() {
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isStandalone = window.navigator.standalone === true;
+    const dismissed = localStorage.getItem('ff_ios_install_dismissed');
+    if (isIos && isSafari && !isStandalone && !dismissed) {
+        setTimeout(() => {
+            const b = document.getElementById('iosInstallBanner');
+            if (b) b.style.display = 'flex';
+        }, 5000);
+    }
+})();
+function dismissIosInstall() {
+    const b = document.getElementById('iosInstallBanner');
+    if (b) b.style.display = 'none';
+    localStorage.setItem('ff_ios_install_dismissed', '1');
+}
+
 window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     deferredInstallPrompt = e;
@@ -300,9 +319,13 @@ function seasonData(sel) {
     return { drivers: a.drivers || [], teams: a.teams || [], races: a.races || [] };
 }
 function colourFor(name, teamsArr) {
-    const t = (teamsArr || []).find(x => x.name === name);
+    if (!name) return autoColor('');
+    const arr = teamsArr || [];
+    let t = arr.find(x => x.name === name);
+    if (!t) t = arr.find(x => (x.name||'').toLowerCase() === name.toLowerCase());
+    if (!t) t = arr.find(x => (x.name||'').toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes((x.name||'').toLowerCase()));
     if (t && t.color) return t.color;
-    return autoColor(name || '');
+    return autoColor(name);
 }
 function autoColor(name) { const p=['#E10600','#0067FF','#00D2BE','#FF8000','#DC0000','#005AFF','#900000','#2B4562','#006F62','#B6BABD','#FF1E00','#0090FF','#00A3E0']; let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%p.length; return p[h]; }
 function dot(c) { return '<span class="team-dot" style="background:' + c + '"></span>'; }
