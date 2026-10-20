@@ -120,7 +120,7 @@ a:hover { color:var(--f1-white); }
 .tab-btn.active { background:var(--f1-red); color:#fff; border-color:var(--f1-red); }
 .tab-btn:hover { border-color:var(--f1-red); }
 .podium { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem; }
-.podium-card { position:relative; border-radius:10px; padding:1.3rem; min-height:150px; overflow:hidden; display:flex; justify-content:space-between; align-items:stretch; background:linear-gradient(105deg, var(--tc) 0%, #0d0d12 100%); }
+.podium-card { position:relative; border-radius:10px; padding:1.3rem; min-height:150px; overflow:hidden; display:flex; justify-content:space-between; align-items:stretch; background:linear-gradient(105deg,color-mix(in srgb,var(--tc) 85%,black) 0%,color-mix(in srgb,var(--tc) 55%,black) 100%); }
 .pc-info { position:relative; z-index:2; display:flex; flex-direction:column; }
 .pc-pos { font-family:var(--font-display); font-weight:900; font-size:1.8rem; color:#fff; line-height:1; }
 .pc-pos span { font-size:0.8rem; margin-left:2px; }
@@ -234,13 +234,12 @@ a:hover { color:var(--f1-white); }
 
 /* TEAMS */
 .f1-teams-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; }
-.f1-team-card { position:relative; min-height:210px; border-radius:10px; overflow:hidden; padding:1.3rem; background:linear-gradient(120deg, var(--tc) 0%, #0d0d12 100%); transition:var(--transition); display:flex; flex-direction:column; }
+.f1-team-card { position:relative; min-height:210px; border-radius:10px; overflow:hidden; padding:1.3rem; background:linear-gradient(120deg,color-mix(in srgb,var(--tc) 88%,black) 0%,color-mix(in srgb,var(--tc) 50%,#0d0d12) 100%); transition:var(--transition); display:flex; flex-direction:column; }
 .f1-team-card:hover { transform:translateY(-3px); }
 .ftc-top { display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:2; }
 .ftc-name { color:#fff; font-family:var(--font-display); font-weight:900; font-size:1.5rem; }
 .ftc-logo { width:42px; height:42px; border-radius:50%; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
 .ftc-logo-img { width:100%; height:100%; object-fit:contain; }
-.ftc-logo-initial { font-family:var(--font-display); font-weight:900; font-size:1.2rem; color:#fff; line-height:1; }
 .ftc-drivers { display:flex; gap:1.2rem; margin-top:0.7rem; position:relative; z-index:2; flex-wrap:wrap; }
 .tdrv { display:flex; align-items:center; gap:0.45rem; }
 .tdrv-av { width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.5); }
@@ -252,7 +251,7 @@ a:hover { color:var(--f1-white); }
 /* DRIVERS */
 .drivers-sub { color:var(--f1-muted); margin:-0.5rem 0 2rem; font-size:1rem; }
 .f1-drivers-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
-.f1-driver-card { position:relative; min-height:170px; border-radius:10px; overflow:hidden; background:linear-gradient(120deg, var(--tc) 0%, #0d0d12 100%); transition:var(--transition); }
+.f1-driver-card { position:relative; min-height:170px; border-radius:10px; overflow:hidden; background:linear-gradient(120deg,color-mix(in srgb,var(--tc) 90%,black) 0%,color-mix(in srgb,var(--tc) 55%,#111) 100%); transition:var(--transition); }
 .f1-driver-card:hover { transform:translateY(-3px); }
 .fdc-info { position:relative; z-index:2; padding:1.1rem; height:100%; display:flex; flex-direction:column; }
 .fdc-first { display:block; color:rgba(255,255,255,0.9); font-size:1rem; font-weight:600; }
@@ -489,7 +488,7 @@ body::after { content:''; position:fixed; inset:0; z-index:-1; pointer-events:no
 .ftp-hint { font-size:0.8rem; color:var(--f1-muted); margin-bottom:0.8rem; }
 .ftp-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:0.7rem; }
 .ftp-card {
-    background:linear-gradient(135deg, var(--tc), var(--f1-surface));
+    background:linear-gradient(135deg, color-mix(in srgb,var(--tc) 40%,var(--f1-surface)), var(--f1-surface));
     border:2px solid var(--f1-line);
     border-radius:8px;
     padding:0.9rem;
@@ -499,7 +498,7 @@ body::after { content:''; position:fixed; inset:0; z-index:-1; pointer-events:no
     user-select:none;
 }
 .ftp-card:hover { border-color:var(--tc); transform:translateY(-2px); }
-.ftp-card.picked { border-color:var(--tc); background:linear-gradient(135deg, var(--tc), #111); }
+.ftp-card.picked { border-color:var(--tc); background:linear-gradient(135deg, color-mix(in srgb,var(--tc) 60%,#000), color-mix(in srgb,var(--tc) 30%,#000)); }
 .ftpc-name { font-family:var(--font-display); font-weight:700; color:var(--f1-white); font-size:0.9rem; }
 .ftpc-team { color:rgba(255,255,255,0.7); font-size:0.75rem; margin-top:0.15rem; }
 .ftpc-pts { color:rgba(255,255,255,0.6); font-size:0.72rem; margin-top:0.3rem; font-family:var(--font-timer); }
@@ -515,6 +514,59 @@ body::after { content:''; position:fixed; inset:0; z-index:-1; pointer-events:no
 .fmp-pts strong { color:var(--f1-red); font-family:var(--font-timer); font-size:1.3rem; }
 .fantasy-leaderboard h2 { margin-bottom:1rem; }
 .hidden { display:none !important; }
+
+/* ========== FANTASY TABS ========== */
+.fantasy-tabs { display:flex; gap:0; margin-bottom:1.8rem; border-bottom:2px solid var(--f1-line); }
+.fantasy-tab-btn { background:none; border:none; color:var(--f1-muted); font-family:var(--font-head); font-size:0.88rem; font-weight:700; letter-spacing:0.06em; cursor:pointer; padding:0.7rem 1.4rem; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color 0.2s, border-color 0.2s; }
+.fantasy-tab-btn:hover { color:var(--f1-white); }
+.fantasy-tab-btn.active { color:var(--f1-white); border-bottom-color:var(--f1-red); }
+
+/* ========== DISCORD NAV LINK ========== */
+.nav-discord { color:#7289DA !important; display:inline-flex !important; align-items:center; gap:4px; }
+.nav-discord:hover { color:#fff !important; }
+
+/* ========== PREDICTIONS ========== */
+.pred-notice { text-align:center; padding:3rem 1rem; color:var(--f1-muted); }
+.pred-card { background:var(--f1-surface); border:1px solid var(--f1-line); border-radius:12px; padding:1.5rem; margin-bottom:1.2rem; }
+.pred-card.pred-correct { border-color:#00c853; }
+.pred-card.pred-wrong { border-color:#e10600; }
+.pred-race-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.8rem; }
+.pred-race-name { font-family:var(--font-head); font-size:1.05rem; color:var(--f1-white); letter-spacing:0.04em; }
+.pred-race-date { color:var(--f1-muted); font-size:0.82rem; }
+.pred-label { color:var(--f1-muted); font-size:0.85rem; margin-bottom:0.8rem; }
+.pred-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:0.5rem; }
+.pred-driver { background:var(--f1-surface-2); border:2px solid transparent; border-radius:8px; padding:0.7rem 0.6rem; cursor:pointer; transition:border-color 0.15s, background 0.15s; }
+.pred-driver:hover { border-color:var(--tc); }
+.pred-driver.pred-picked { border-color:var(--tc); background:linear-gradient(135deg,color-mix(in srgb,var(--tc) 40%,#000),color-mix(in srgb,var(--tc) 15%,#000)); }
+.pred-d-name { font-weight:700; font-size:0.85rem; color:var(--f1-white); }
+.pred-d-team { font-size:0.75rem; color:var(--f1-muted); margin-top:2px; }
+.pred-check { font-size:0.7rem; color:var(--tc); margin-top:4px; font-weight:700; }
+.pred-saved { margin-top:1rem; color:var(--f1-muted); font-size:0.88rem; }
+.pred-result-row { display:flex; justify-content:space-between; align-items:center; font-size:0.9rem; color:var(--f1-muted); }
+.pred-result-row strong { color:var(--f1-white); }
+.pred-badge { font-size:0.8rem; font-weight:700; padding:0.25rem 0.6rem; border-radius:99px; }
+.pred-badge-win { background:rgba(0,200,83,0.15); color:#00c853; }
+.pred-badge-loss { background:rgba(225,6,0,0.15); color:#e10600; }
+.pred-badge-none { background:var(--f1-surface-2); color:var(--f1-muted); }
+
+/* ========== DRIVER OF THE DAY ========== */
+.dotd-race-block { background:var(--f1-surface); border:1px solid var(--f1-line); border-radius:14px; padding:1.5rem; margin-bottom:2rem; }
+.dotd-race-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:0.5rem; }
+.dotd-race-header h2 { font-family:var(--font-head); font-size:1.1rem; color:var(--f1-white); margin:0; }
+.dotd-date { color:var(--f1-muted); font-size:0.82rem; }
+.dotd-hint { color:var(--f1-muted); font-size:0.85rem; margin:0.4rem 0 1rem; }
+.dotd-hint strong { color:var(--f1-white); }
+.dotd-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:0.6rem; }
+.dotd-card { background:var(--f1-surface-2); border:2px solid transparent; border-radius:10px; padding:0.8rem 0.7rem; cursor:pointer; transition:border-color 0.15s, background 0.15s; }
+.dotd-card:hover { border-color:var(--tc); }
+.dotd-card.dotd-voted { border-color:var(--tc); background:linear-gradient(135deg,color-mix(in srgb,var(--tc) 40%,#000),color-mix(in srgb,var(--tc) 15%,#000)); cursor:default; }
+.dotd-name { font-weight:700; font-size:0.88rem; color:var(--f1-white); }
+.dotd-team { font-size:0.75rem; color:var(--f1-muted); margin-top:2px; }
+.dotd-check { font-size:0.72rem; color:gold; font-weight:700; margin-top:5px; }
+.dotd-bar-wrap { background:var(--f1-line); border-radius:99px; height:4px; margin-top:6px; overflow:hidden; }
+.dotd-bar { height:4px; border-radius:99px; transition:width 0.4s; min-width:2px; }
+.dotd-pct { font-size:0.72rem; color:var(--f1-muted); margin-top:3px; }
+.dotd-total { color:var(--f1-muted); font-size:0.82rem; margin-top:1rem; text-align:right; }
 
 /* ==================== PWA INSTALL / NOTIF BANNERS ==================== */
 .install-banner {
