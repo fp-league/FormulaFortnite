@@ -770,6 +770,7 @@ function renderTeams() {
         const card = document.createElement('div');
         card.className = 'f1-team-card';
         card.style.setProperty('--tc', c);
+        card.style.setProperty('background', `linear-gradient(135deg, ${c} 0%, #111 60%, #0a0a0a 100%)`, 'important');
         card.style.cursor = 'pointer';
         card.innerHTML = `
             <div class="ftc-top">
@@ -821,6 +822,7 @@ function renderDrivers() {
         const card = document.createElement('div');
         card.className = 'f1-driver-card';
         card.style.setProperty('--tc', c);
+        card.style.setProperty('background', `linear-gradient(135deg, ${c} 0%, #111 60%, #0a0a0a 100%)`, 'important');
         card.style.cursor = 'pointer';
         card.innerHTML = `
             <div class="fdc-info">
