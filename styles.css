@@ -466,11 +466,11 @@ body::after { content:''; position:fixed; inset:0; z-index:-1; pointer-events:no
 
 /* ==================== FORM GUIDE ==================== */
 .form-guide { display:flex; gap:3px; }
-.fg-dot { width:20px; height:20px; border-radius:3px; font-size:0.65rem; font-weight:900; display:flex; align-items:center; justify-content:center; color:#fff; font-family:var(--font-display); }
-.fg-dot.W { background:#2e7d32; }
-.fg-dot.P { background:var(--f1-red); }
-.fg-dot.F { background:#666; }
-.fg-dot.D { background:#444; }
+.fg-dot { width:22px; height:22px; border-radius:4px; font-size:0.6rem; font-weight:900; display:flex; align-items:center; justify-content:center; color:#fff; font-family:var(--font-display); font-variant-numeric:tabular-nums; }
+.fg-dot.fg-win { background:#2e7d32; }
+.fg-dot.fg-pod { background:var(--f1-red); }
+.fg-dot.fg-fin { background:#444; }
+.fg-dot.fg-dnf { background:#222; color:#666; }
 
 /* ==================== POINTS GAP ==================== */
 .pts-gap { color:var(--f1-muted); font-size:0.85rem; }
