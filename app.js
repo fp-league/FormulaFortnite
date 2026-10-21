@@ -479,7 +479,7 @@ function renderStandingsView() {
                 [...data.races].sort((a,b)=>new Date(a.date||0)-new Date(b.date||0)).forEach(r => {
                     (r.results||[]).forEach(res => {
                         if (!formMap[res.driver]) formMap[res.driver] = [];
-                        formMap[res.driver].push(res.dnf ? 'D' : res.pos === 1 ? 'W' : res.pos <= 3 ? 'P' : 'F');
+                        formMap[res.driver].push(res.dnf ? 'DNF' : String(res.pos || '?'));
                     });
                 });
             }
@@ -488,7 +488,10 @@ function renderStandingsView() {
             </tr></thead><tbody>` +
                 sorted.map((d, i) => {
                     const gap = i === 0 ? '<span class="pts-leader">LEADER</span>' : `<span class="pts-gap">-${leader - (d.points||0)}</span>`;
-                    const form = (formMap[d.name] || []).slice(-5).map(f=>`<div class="fg-dot ${f}">${f==='D'?'—':f}</div>`).join('');
+                    const form = (formMap[d.name] || []).slice(-5).map(f=>{
+                        const cls = f==='DNF'?'fg-dnf':f==='1'?'fg-win':f==='2'||f==='3'?'fg-pod':'fg-fin';
+                        return `<div class="fg-dot ${cls}">${f}</div>`;
+                    }).join('');
                     return `<tr data-i="${i}" style="cursor:pointer;">
                         <td class="rt-pos">${i + 1}</td>
                         <td class="std-driver">${driverAvatar(d,'std-avatar')}<span>${d.name}</span></td>
@@ -883,7 +886,7 @@ function openDriverProfile(driver) {
         const isDnf = res.dnf;
         const posDisplay = isDnf ? 'DNF' : (res.pos || '—');
         const fgClass = isDnf ? 'D' : res.pos === 1 ? 'W' : res.pos <= 3 ? 'P' : 'F';
-        formArr.push(fgClass);
+        formArr.push(res.dnf ? 'DNF' : String(res.pos || '?'));
         raceRows += `<tr>
             <td>${r.date ? new Date(r.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—'}</td>
             <td class="rt-gp">${r.name}</td>
@@ -892,7 +895,10 @@ function openDriverProfile(driver) {
         </tr>`;
     });
 
-    const formHTML = formArr.slice(-5).map(f => `<div class="fg-dot ${f}">${f==='D'?'DNF':f}</div>`).join('');
+    const formHTML = formArr.slice(-5).map(f => {
+        const cls = f==='DNF'?'fg-dnf':f==='1'?'fg-win':f==='2'||f==='3'?'fg-pod':'fg-fin';
+        return `<div class="fg-dot ${cls}">${f}</div>`;
+    }).join('');
 
     openModal(`
         <div class="driver-profile-page">
